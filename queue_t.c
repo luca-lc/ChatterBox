@@ -1,6 +1,6 @@
 //
-// CHATTERBOX_LIST_T_C
-// Created by luca - mat. 516639.
+// CHATTERBOX_QUEUE_T_C
+// Created by Luca Canessa - mat. 516639.
 // Declares that all contents of this file are author's original operas
 //
 
@@ -11,6 +11,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+
+/******************************************************************************
+									FUNCTIONS
+******************************************************************************/
+
+/**
+ * @brief       allocates space for new queue
+ * @return  q   pointer to new queue
+ */
 queue_t *initialQueue( )
 {
     queue_t *q = NULL;
@@ -31,6 +41,13 @@ queue_t *initialQueue( )
 }//end initialQueue
 
 
+
+/**
+ * @brief            creates a new node and fill its items with param 'new data' and increases the queue length
+ * @param   q        pointer to queue where add data
+ * @praam   new_data pointer to new data
+ * @var 	newn	 new node to add at end of queue
+ */
 int push( queue_t *q, void *new_data )
 {
 	node_t *newn = NULL;
@@ -48,10 +65,15 @@ int push( queue_t *q, void *new_data )
 	q->queue_len += 1;
 
 	return 0;
-}
+}//end push
 
 
-/*
+
+/**
+ * @brief       cleans all data from queue and erase its
+ * @param   q   pointer to queue to clean.
+ * @var		tmp temporary pointer to head's element
+ */
 void clean_all( queue_t *q )
 {
     while( q->head != q->tail )
@@ -68,4 +90,4 @@ void clean_all( queue_t *q )
 
     free( q );
 }//end clean_all
-*/
+

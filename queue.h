@@ -1,11 +1,14 @@
 //
-// CHATTERBOX_LIST_T_H
-// Created by luca - mat. 516639.
+// CHATTERBOX_QUEUE_H
+// Created by Luca Canessa - mat. 516639.
 // Declares that all contents of this file are author's original operas
 //
 
+
+
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
+
 
 
 /******************************************************************************

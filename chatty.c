@@ -23,8 +23,10 @@
 #include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include "stats.h"
-#include "queue.h"
+#include <stats.h>
+#include <queue.h>
+#include <sign_up.h>
+#include <ops.h>
 
 /* inserire gli altri include che servono */
 
@@ -70,6 +72,7 @@ int main(int argc, char *argv[])
     if (argc == 1)
     {
         usage( argv[0] );
+        return -1;
     }
 
     char opt;
@@ -81,7 +84,7 @@ int main(int argc, char *argv[])
             {
                 if( (stats=fopen( "./.statschat.log", "a+" )) == NULL )
                 {
-                    fprintf( stderr, "problem to create or open stats file" ); //TODO: check
+                    fprintf( stderr, "problem to create or open stats file" );//TODO: check
                 }
                 else
                 {
@@ -91,11 +94,7 @@ int main(int argc, char *argv[])
             }
                 break;
 
-            default:
-            {
-                usage( argv[0] );
-                return -1;
-            };
+            default: ;
         }
     }
 
@@ -106,8 +105,11 @@ int main(int argc, char *argv[])
     printf( "\noutput: \t\n" );
     pop( r );
 
-
-
+    op_t q;
+    if( is_registrated( r, (int)11 ) == OP_NICK_UNKNOWN )
+    	printf( "rospo1" );
+    else
+    	printf( "rospo2" );
 
     return 0;
 }

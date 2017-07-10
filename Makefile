@@ -39,7 +39,7 @@ DIR_PATH        = /tmp/chatty
 CC		=  gcc
 AR              =  ar
 CFLAGS	        += -std=c99 -Wall -pedantic -g -DMAKE_VALGRIND_HAPPY
-ARFLAGS         =  rvs
+ARFLAGS         =  rcvs
 INCLUDES	= -I.
 LDFLAGS 	= -L.
 OPTFLAGS	= #-O3 
@@ -51,33 +51,39 @@ TARGETS		= chatty        #\
 
 
 # aggiungere qui i file oggetto da compilare
-OBJECTS		= 
+OBJECTS		= 	*.o
 
 # aggiungere qui gli altri include 
-HEADERS_FILES   = connections.h \
+HEADER_FILES   = connections.h \
 		  message.h     \
 		  ops.h	  	\
 		  stats.h       \
 		  config.h		\
-		  queue.h
+		  queue.h		\
+		  sign_up.h
 
 
-SOURCE_FILES	= queue_t.c
+SOURCE_FILES	= 	queue_t.c		\
+					sign_up.c
 
 
 .PHONY: all clean cleanall test1 test2 test3 test4 test5 consegna
 .SUFFIXES: .c .h
 
-%: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -o $@ $^ $(LDFLAGS) 
+%: %.c 
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -o $@ $< $(LDFLAGS) 
 
-%.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $^
+%.o: %.c 
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $< 
+	
+chatty.o: chatty.c
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
+	
 
 all		: $(TARGETS)
 
 
-chatty: chatty.o libchatty.a $(HEADERS_FILES) $(SOURCE_FILES)
+chatty: chatty.o libchatty.a $(SOURCE_FILES)
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 #client: client.o connections.o message.h

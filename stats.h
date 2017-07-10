@@ -39,6 +39,7 @@ static inline int printStats(FILE *fout) {
 		chattyStats.nerrors
 		) < 0) return -1;
     fflush(fout);
+
     return 0;
 }
 
