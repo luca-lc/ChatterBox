@@ -40,22 +40,15 @@
  */
 struct statistics  chattyStats = { 0,0,0,0,0,0,0 }; //#registered user,#client online,#delivered mes,#to be delivered message,#delivered files, #to be delivered files, #errors messages
 
-
-static void usage(const char *progname) {
-    fprintf( stderr, "Il server va lanciato con il seguente comando:\n" );
-    fprintf( stderr, "  %s -f conffile\n", progname );
-}
-
-
-void pop( queue_t *l )
+/**
+ * TODO
+ */
+static void usage(const char *progname)
 {
-	if( l->head->next != NULL )
-	{
-		printf( "%d", (int)l->head->next->ptr );
-	}
-
-	return;
+    fprintf( stderr, "Il server va lanciato con il seguente comando:\n" );
+    fprintf( stderr, "  %s -f <conffile>\n", progname );
 }
+
 
 
 /******************************************************************************
@@ -88,7 +81,6 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                	printf("print stats log\n");
                     printStats( stats ); //TODO: clean "statschat.log"
                 }
             }
@@ -100,16 +92,17 @@ int main(int argc, char *argv[])
 
     queue_t *r = initialQueue( );
 
-    printf( "\ninput: %d\n", push( r, (int)10 ) );
+    push( r, (int)2);
+    push( r, (int)12);
+    push( r, (int)3);
+    push( r, (int)5);
 
-    printf( "\noutput: \t\n" );
-    pop( r );
+    for( int i = 1; i <= 12; i++ )
+    {
+    		sign_up( (int)i, r );
+    }
 
-    op_t q;
-    if( is_registrated( r, (int)11 ) == OP_NICK_UNKNOWN )
-    	printf( "rospo1" );
-    else
-    	printf( "rospo2" );
-
+    printStats( stats );
+    printf( "\n\t%ld\n", chattyStats.nusers );
     return 0;
 }

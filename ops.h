@@ -17,10 +17,11 @@
 
 typedef enum {
 
-    /* ------------------------------------------ */
-    /*      operazioni che il server deve gestire */
-    /* ------------------------------------------ */
-    REGISTER_OP      = 0,   /// richiesta di registrazione di un ninckname
+    /* ----------------------------------------------- */
+    /*      operazioni che il server deve gestire 	 */
+    /* ---------------------------------------------- */
+
+	REGISTER_OP      = 0,   /// richiesta di registrazione di un ninckname
 
     CONNECT_OP       = 1,   /// richiesta di connessione di un client
     POSTTXT_OP       = 2,   /// richiesta di invio di un messaggio testuale ad un nickname o groupname
@@ -59,7 +60,7 @@ typedef enum {
     /* 
      * aggiungere qui altri messaggi di ritorno che possono servire 
      */
-
+	GENERIC_ERROR	= -1,
     OP_END          = 100 // limite superiore agli id usati per le operazioni
 
 } op_t;
