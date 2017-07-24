@@ -26,15 +26,17 @@ static pthread_cond_t reg_cond = PTHREAD_COND_INITIALIZER;
 /******************************************************************************
 									FUNCTIONS
 ******************************************************************************/
+
 /**
- * @brief	checks if in the 'reg' list is present the item 'elem'
- * @param	reg		is a pointer to queue of type queue_t
- * @param	elem 	is a pointer to element of type 'void *'
- * @var		tmp		is a temporary pointer to an element of queue
- * @return	a code of a request operation
+ * @brief		checks if a element (user) is in the queue 'reg'
+ * @param reg	pointer to queue of registered users
+ * @param elem	pointer to user to check if is in the queue
+ * @return 		OP_NICK_ALREADY if registered
+ * 				OP_NICK_UNKNOWN if not registered
  */
-op_t is_registrated( queue_t *reg, void *elem )
+op_t is_registered( queue_t *reg, void *elem )
 {
+	int isreg = 0;
 	node_t *tmp = ( node_t * )reg->head;
 
 	pthread_mutex_lock( &reg_lock );
@@ -47,38 +49,41 @@ op_t is_registrated( queue_t *reg, void *elem )
 	{
 		if( tmp->ptr == elem )
 		{
-			pthread_cond_signal( &reg_cond );
-			pthread_mutex_unlock( &reg_lock );
-			return OP_NICK_ALREADY;
+			isreg = 1;
 		}
 		tmp = tmp->next;
 	}
 	pthread_cond_signal( &reg_cond );
 	pthread_mutex_unlock( &reg_lock );
 
-	if( tmp == NULL )
+	if( isreg == 1 )
+	{
+		return OP_NICK_ALREADY;
+	}
+	else
+	{
 		return OP_NICK_UNKNOWN;
+	}
 
-	return GENERIC_ERROR;
-}//end is_registrated
+}//end is_registered
 
 
 
 /**
- * @brief	checks if the user 'user' is in the queue 'reg', if he is present return an error code, else registers hi
- * @param	user		is a pointer to user to register
- * @param 	reg		is a queue where are preset all users
+ * @brief 		checks if the user 'user' is registered, if not record him
+ * @param user	pointer to user to record
+ * @param reg	pointer to queue of registered users
  */
 void sign_up( void *user, queue_t *reg )
 {
 	extern struct statistics chattyStats;
 
-	if( is_registrated( reg, user ) == OP_NICK_UNKNOWN )//unregistrated user
+	if( is_registered( reg, user ) == OP_NICK_UNKNOWN )//unregistrated user
 	{
 		pthread_mutex_lock( &reg_lock );
 		push( reg, user );
 		chattyStats.nusers += (int)1;
 		pthread_mutex_unlock( &reg_lock );
 	}
-}
+}//end sign_up
 
