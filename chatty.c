@@ -27,6 +27,7 @@
 #include <queue.h>
 #include <sign_up.h>
 #include <ops.h>
+#include <pool.h>
 
 /* inserire gli altri include che servono */
 
@@ -90,6 +91,9 @@ int main(int argc, char *argv[])
         }
     }
 
+
+    /** =========== TEST =========== **/
+
     queue_t *r = initialQueue( );
 
     push( r, (int)2);
@@ -97,12 +101,27 @@ int main(int argc, char *argv[])
     push( r, (int)3);
     push( r, (int)5);
 
-    for( int i = 1; i <= 12; i++ )
-    {
-    		sign_up( (int)i, r );
-    }
-
     printStats( stats );
-    printf( "\n\t%ld\n", chattyStats.nusers );
+
+
+    sem_t s;
+    sem_init( &s, 1 );
+	printf( "\t*%d* rosp1o", s.s_v );
+
+	sem_reset( &s );
+	printf( "\t*%d* rosp1o", s.s_v );
+
+	sem_post( &s );
+	printf( "\t*%d* rosp1o", s.s_v );
+
+	sem_wait( &s );
+	printf( "\t*%d* rosp1o", s.s_v );
+
+	//sem_wait( &s );
+	printf( "\t*%d* rosp1o", s.s_v );
+
+
+n
+
     return 0;
 }

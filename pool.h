@@ -15,7 +15,7 @@
 #include <assert.h>
 
 
-extern int num_pool = 5;
+extern int num_pool;
 
 
 /******************************************************************************
@@ -27,7 +27,7 @@ extern int num_pool = 5;
 typedef struct sem
 {
 	pthread_mutex_t s_mutex;
-	phtread_cond_t s_cond;
+	pthread_cond_t s_cond;
 	int s_v;
 }sem_t;
 
@@ -60,7 +60,7 @@ typedef struct qj
 */
 typedef struct thpool
 {
-	thread_t **threads;					//pointer to threads
+	struct th **threads;					//pointer to threads
 	volatile int active_th;				//number of threads at work
 	volatile int th_set;				//number of thread alive
 	pthread_mutex_t pool_lock;
@@ -76,9 +76,84 @@ typedef struct th
 {
 	int tid;							//thread id
 	pthread_t thread;					//pointer to thread
-	thread_pool_t *tpool;				//pointer to thread pool
+	struct thpool *tpool;				//pointer to thread pool
 }thread_t;
 
+
+
+/******************************************************************************
+									FUNCTIONS
+******************************************************************************/
+
+/** =============== SEMAPHORES =============== **/
+/*
+  @
+*/
+void sem_init( sem_t *S, int val );
+
+
+
+/*
+  @
+*/
+void sem_reset( sem_t *S );
+
+
+
+/*
+  @
+*/
+void sem_post( sem_t *S );
+
+
+
+/*
+  @
+*/
+void every_sem_post( sem_t *S );
+
+
+
+/*
+  @
+*/
+void sem_wait( sem_t *S );
+
+
+
+/** =============== JOBS =============== **/
+/*
+  @
+*/
+int init_queue_jobs( queue_jobs_t *qj );
+
+
+
+/*
+  @
+*/
+void clear_jobs_queue( queue_jobs_t *qj );
+
+
+
+/*
+  @
+*/
+void push_jobs_queue( queue_jobs_t *qj, jobs_t *n_j );
+
+
+
+/*
+  @
+*/
+jobs_t *pull_jobs_queue( queue_jobs_t *qj );
+
+
+
+/*
+  @
+*/
+void erase_jobs_queue( queue_jobs_t *qj );
 
 
 #endif

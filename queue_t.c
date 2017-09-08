@@ -30,7 +30,6 @@ queue_t *initialQueue( )
         fprintf( stderr, "Problem to allocates space for queue" );
         exit( EXIT_FAILURE );
     }
-    printf( "puppa!!" );
     q->head = ( node_t * )malloc( sizeof( node_t ) );
     q->head->ptr = NULL;
     q->head->next = NULL;
@@ -45,7 +44,7 @@ queue_t *initialQueue( )
 /**
  * @brief            creates a new node and fill its items with param 'new data' and increases the queue length
  * @param   q        pointer to queue where add data
- * @praam   new_data pointer to new data
+ * @param   new_data pointer to new data
  * @var 	newn	 new node to add at end of queue
  */
 int push( queue_t *q, void *new_data )

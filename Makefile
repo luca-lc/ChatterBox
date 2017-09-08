@@ -43,7 +43,7 @@ ARFLAGS         =  rcvs
 INCLUDES	= -I.
 LDFLAGS 	= -L.
 OPTFLAGS	= #-O3 
-LIBS            = -pthread
+LIBS            = -lpthread
 
 # aggiungere qui altri targets se necessario
 TARGETS		= chatty        #\
@@ -60,11 +60,11 @@ HEADER_FILES   = connections.h \
 		  stats.h       \
 		  config.h		\
 		  queue.h		\
-		  sign_up.h
+		  pool.h
 
 
 SOURCE_FILES	= 	queue_t.c		\
-					sign_up.c
+					pool.c
 
 
 .PHONY: all clean cleanall test1 test2 test3 test4 test5 consegna
