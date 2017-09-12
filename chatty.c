@@ -155,6 +155,34 @@ int main(int argc, char *argv[])
     /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
 
 
+/* ====================== TEST THREADPOO_ADD =============================== */
+
+    /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
+//    threadpool_t *pool = (threadpool_t *)malloc(max_conn * sizeof( threadpool_t ));
+//    pool->queue_size = max_conn;
+//    pool->head = pool->tail = pool->count = 0;
+//    pool->shutdown = 0;
+//    pool->started = 0;
+//    pool->task = ( thread_task_t * )malloc( max_conn * sizeof( thread_task_t ));
+//    for( int i = 0; i < max_conn; i++ )
+//    {
+//    	threadpool_add( pool, print, i+250 );
+//    }
+//
+//
+//    for( int j = 0; j < max_conn; j++ )
+//    {
+//    	printf( "arg[%d] %d\n", j, pool->task[j].args );
+//    }
+    /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
+
+
+
+
+
+
+    usleep( 10000 );
+
 
     return 0;
 }

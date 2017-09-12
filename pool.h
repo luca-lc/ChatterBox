@@ -69,6 +69,8 @@ int threadpool_free(threadpool_t *pool);
 
 int threadpool_destroy(threadpool_t *pool, int flags);
 
+void print( void *arg );
+
 
 threadpool_t *pool_creation( );
 

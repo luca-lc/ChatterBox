@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <assert.h>
 
-int max_conn = 5, num_thread = 5;
+int max_conn = 5, num_thread = 2;
 
 /******************************************************************************
  	 	 	 	 	 	 	 	 CONDITION & LOCK
@@ -27,7 +27,7 @@ typedef enum {
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
-/*
+
 void thread_work( void *args )
 {
 	threadpool_t *pool = ( threadpool_t * )args;
@@ -66,7 +66,7 @@ void thread_work( void *args )
 	}
 
 }
-*/
+
 
 
 /*********************** START TEST FUNCTION ******************/
@@ -111,7 +111,7 @@ threadpool_t *pool_creation( )
 
 	for( int i = 0; i < num_thread; i++ )
 	{
-		if( pthread_create( &(pool->thread[i]), NULL, print, i+100 ) != 0 )
+		if( pthread_create( &(pool->thread[i]), NULL, thread_work, pool ) != 0 )
 		{
 			//threadpool_destroy( pool, 0 ); //TODO: to uncomment
 			fprintf( stderr, "Problem to create thread" );
@@ -124,7 +124,7 @@ threadpool_t *pool_creation( )
 	return pool;
 }
 
-/*
+
 int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 {
 	int next;
@@ -133,7 +133,6 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 	{
 		return -1;
 	}
-
 
 	if( pthread_mutex_lock( &(pool->lock_t) ) != 0 )
 	{
@@ -163,8 +162,6 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 		return -1;
 	}
 
-	printf( "add_c: %d\n", pool->count );
-
 	if( pthread_mutex_unlock( &(pool->lock_t) ) != 0 )
 	{
 		return -1;
@@ -174,6 +171,7 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 	return 0;
 }
 
+/*
 int threadpool_free(threadpool_t *pool)
 {
     if(pool == NULL || pool->started > 0) {
