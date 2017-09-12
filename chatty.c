@@ -49,10 +49,10 @@ static void usage(const char *progname)
     fprintf( stderr, "  %s -f <conffile>\n", progname );
 }
 
-void print( void *arg )
-{
-	printf( "print: %d\n", (int)arg );
-}
+//void print( void *arg )
+//{
+//	printf( "print: %d\n", (int)arg );
+//}
 
 /******************************************************************************
                                     MAIN
@@ -109,33 +109,49 @@ int main(int argc, char *argv[])
 /* ====================== TEST THREAD_WORK WITHOUT & WITH THREAD =============================== */
 
     /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
-    threadpool_t *pool = ( threadpool_t * )malloc( sizeof( threadpool_t ) );
-    pool->lock_t = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-    pool->cond_t = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-    pool->count = pool->queue_size = 3;
-    pool->head = 0;
-    pool->tail = 2;
-    pool->task = (thread_task_t *)malloc( 3 * sizeof(thread_task_t));
-    for( int i = 0; i < 3; i++ )
-	{
-    	pool->task[i].function = print;
-    	pool->task[i].args = i+3;
-	}
+//    threadpool_t *pool = ( threadpool_t * )malloc( sizeof( threadpool_t ) );
+//    pool->lock_t = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+//    pool->cond_t = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+//    pool->count = pool->queue_size = 3;
+//    pool->head = 0;
+//    pool->tail = 2;
+//    pool->task = (thread_task_t *)malloc( 3 * sizeof(thread_task_t));
+//    for( int i = 0; i < 3; i++ )
+//	{
+//    	pool->task[i].function = print;
+//    	pool->task[i].args = i+3;
+//	}
+//
+//    //thread_work( pool );   //WHITOUT THREAD
+//
+//    pool->thread = (pthread_t *)malloc( 2 * sizeof(pthread_t));
+//    for( int j = 0; j < 2; j++ )
+//    {
+//    	pthread_create( &(pool->thread[j]), NULL, thread_work, pool );
+//    }
+//
+//    usleep( 10000 );
+//
+//    for( int j = 0; j < 2; j++ )
+//	{
+//		pthread_join( &(pool->thread[j]), NULL );
+//	}
+    /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
 
-    //thread_work( pool );   //WHITOUT THREAD
+/* ====================== TEST POOL_CREATION =============================== */
 
-    pool->thread = (pthread_t *)malloc( 2 * sizeof(pthread_t));
-    for( int j = 0; j < 2; j++ )
-    {
-    	pthread_create( &(pool->thread[j]), NULL, thread_work, pool );
-    }
-
-    usleep( 10000 );
-
-    for( int j = 0; j < 2; j++ )
-	{
-		pthread_join( &(pool->thread[j]), NULL );
-	}
+    /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
+//    threadpool_t *p = pool_creation();
+//
+//    usleep( 10000 );
+//    printf( "\n\n\n" );
+//    printf( "thread_crt: \t %d \n", p->thread_crt );
+//    printf( "queue_size: \t %d \n", p->queue_size );
+//    printf( "head: \t %d \n", p->head );
+//    printf( "tail: \t %d \n", p->tail );
+//    printf( "count: \t %d \n", p->count );
+//    printf( "shutdown: \t %d \n", p->shutdown );
+//    printf( "started: \t %d \n", p->started );
     /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
 
 

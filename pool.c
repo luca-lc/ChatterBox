@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <assert.h>
 
-int max_conn = 5, num_thread = 2;
+int max_conn = 5, num_thread = 5;
 
 /******************************************************************************
  	 	 	 	 	 	 	 	 CONDITION & LOCK
@@ -27,6 +27,7 @@ typedef enum {
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
+/*
 void thread_work( void *args )
 {
 	threadpool_t *pool = ( threadpool_t * )args;
@@ -39,18 +40,18 @@ void thread_work( void *args )
 	while( pool->count > 0 )
 	{
 		pthread_mutex_lock( &(pool->lock_t) );
-		/*while( pool->count == 0 )
-		{
-			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
-
-		}
-
-		if( pool->shutdown == 0)
-		{
-			pthread_mutex_unlock( &(pool->lock_t) );
-			printf( "shutdown\n" );
-			exit( EXIT_SUCCESS );
-		}*/
+//		while( pool->count == 0 )
+//		{
+//			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
+//
+//		}
+//
+//		if( pool->shutdown == 0)
+//		{
+//			pthread_mutex_unlock( &(pool->lock_t) );
+//			printf( "shutdown\n" );
+//			exit( EXIT_SUCCESS );
+//		}
 
 		i++;
 		tasks.function = pool->task[pool->head].function;
@@ -65,9 +66,16 @@ void thread_work( void *args )
 	}
 
 }
+*/
 
 
-/*
+/*********************** START TEST FUNCTION ******************/
+void print( void *arg ) //TODO: to be removed
+{
+	printf( "print: %d\n", (int)arg );
+}
+/*********************** END TEST FUNCTION ******************/
+
 threadpool_t *pool_creation( )
 {
 	threadpool_t *pool;
@@ -103,9 +111,9 @@ threadpool_t *pool_creation( )
 
 	for( int i = 0; i < num_thread; i++ )
 	{
-		if( pthread_create( &(pool->thread[i]), NULL, &thread_work, (void*)pool ) != 0 )
+		if( pthread_create( &(pool->thread[i]), NULL, print, i+100 ) != 0 )
 		{
-			threadpool_destroy( pool, 0 );
+			//threadpool_destroy( pool, 0 ); //TODO: to uncomment
 			fprintf( stderr, "Problem to create thread" );
 			exit( EXIT_FAILURE );
 		}
@@ -116,7 +124,7 @@ threadpool_t *pool_creation( )
 	return pool;
 }
 
-
+/*
 int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 {
 	int next;
