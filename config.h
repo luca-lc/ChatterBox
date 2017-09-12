@@ -19,7 +19,7 @@
 
 
 
-// to avoid warnings like "ISO C forbids an empty translation unit"x
+// to avoid warnings like "ISO C forbids an empty translation unit"
 typedef int make_iso_compilers_happy;
 
 #endif /* CONFIG_H_ */

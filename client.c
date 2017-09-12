@@ -85,7 +85,7 @@ static int readMessage(int connfd, message_hdr_t *hdr) {
     
     MSGS[msgcur].hdr = *hdr;
     msgcur++;
-    if (msgcur>=msglen) {      
+    if (msgcur>=msglen) {  
 	msglen += msgbatch;
 	MSGS= realloc(MSGS, msglen);
 	if (MSGS == NULL) {
@@ -139,7 +139,8 @@ static int execute_requestreply(int connfd, operation_t *o) {
     message_t msg;
     char  *mappedfile = NULL;
     
-    setData(&msg.data, "", NULL, 0);
+    //setData(&msg.data, "", NULL, 0);
+    setData(&msg.data, rname, NULL, 0);
     setHeader(&msg.hdr, op, sname);
     if (op == POSTTXT_OP || op == POSTTXTALL_OP || op == POSTFILE_OP) {
 	if (o->size == 0) {
@@ -247,7 +248,7 @@ static int execute_requestreply(int connfd, operation_t *o) {
 	for(size_t i=0;i<nmsgs;++i) {
 	    message_t pmsg;
 	    // leggo l'intero messaggio
-	    if (readMsg(connfd, &pmsg) == -1) {
+	    if (readMsg(connfd, &pmsg) <= 0) {
 		perror("reply data");
 		return -1; 
 	    }	

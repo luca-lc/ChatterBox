@@ -51,8 +51,8 @@ for ((i=0;i<16;++i)); do
 	killall -USR1 chatty
     done    
 
-    ./client -l $1 -c usente1
-    ./client -l $1 -c usente2
+    ./client -l $1 -c utente1
+    ./client -l $1 -c utente2
     ./client -l $1 -k utente1 -R 5 -S connections.o:utente2 -p
     ./client -l $1 -k utente2 -R 5 -p -S chatty.o:utente1 
 

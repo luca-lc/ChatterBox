@@ -35,6 +35,7 @@ testconf.sh
 testfile.sh
 testleaks.sh
 teststress.sh
+testgroups.sh
 Makefile  
 		       : programmi di test e Makefile. Nessuno dei file di test va modificato.
                          Il Makefile va modificato nelle parti indicate.
@@ -64,6 +65,8 @@ Come procedere :
        bash:~$ make test2  
        bash:~$ make test3
        bash:~$ make test4
+       bash:~$ make test5
+       bash:~$ make test6
   
   
 4) preparare la documentazione: ovvero commentare adeguatamente il/i file che  

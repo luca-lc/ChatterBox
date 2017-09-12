@@ -17,11 +17,10 @@
 
 typedef enum {
 
-    /* ----------------------------------------------- */
-    /*      operazioni che il server deve gestire 	 */
-    /* ---------------------------------------------- */
-
-	REGISTER_OP      = 0,   /// richiesta di registrazione di un ninckname
+    /* ------------------------------------------ */
+    /*      operazioni che il server deve gestire */
+    /* ------------------------------------------ */
+    REGISTER_OP      = 0,   /// richiesta di registrazione di un ninckname
 
     CONNECT_OP       = 1,   /// richiesta di connessione di un client
     POSTTXT_OP       = 2,   /// richiesta di invio di un messaggio testuale ad un nickname o groupname
@@ -34,9 +33,10 @@ typedef enum {
     DISCONNECT_OP    = 9,   /// richiesta di disconnessione
 
     CREATEGROUP_OP   = 10,  /// richiesta di creazione di un gruppo
-    ADDGROUP_OP      = 11,  /// richiesta di aggiungersi al gruppo
-    DELGROUP_OP      = 12,  /// richiesta di aggiungersi al gruppo
+    ADDGROUP_OP      = 11,  /// richiesta di aggiunta ad un gruppo
+    DELGROUP_OP      = 12,  /// richiesta di rimozione da un gruppo
 
+    /* NOTA: la richiesta di cancellazione di un gruppo e' lasciata come task opzionale */
 
     /* 
      * aggiungere qui eltre operazioni che si vogliono implementare 
@@ -60,7 +60,7 @@ typedef enum {
     /* 
      * aggiungere qui altri messaggi di ritorno che possono servire 
      */
-	GENERIC_ERROR	= -1,
+
     OP_END          = 100 // limite superiore agli id usati per le operazioni
 
 } op_t;
