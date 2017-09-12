@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <assert.h>
 
-int max_conn = 5, num_thread = 2;
+int max_conn = 5, num_thread = 3;
 
 /******************************************************************************
  	 	 	 	 	 	 	 	 CONDITION & LOCK

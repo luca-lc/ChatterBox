@@ -178,6 +178,16 @@ int main(int argc, char *argv[])
 
 
 
+/* ====================== TEST THREADPOOL =============================== */
+
+    threadpool_t *p = pool_creation();
+
+
+    for( int i = 0; i < max_conn; i++ )
+    {
+    	threadpool_add( p, print, i );
+    }
+
 
 
 
