@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
     }
 
 
-    /** =========== TEST =========== **/
-
+/* ====================== TEST QUEUE =============================== */
+    /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
 //    queue_t *r = initialQueue( );
 //
 //    push( r, (int)2);
@@ -103,7 +103,12 @@ int main(int argc, char *argv[])
 //    push( r, (int)3);
 //    push( r, (int)5);
 //
-//    printStats( stats );
+//    clear_queue( r );
+//
+//    printf( "%d\n", (int)pull(r) );
+//    printf( "%d\n", (int)pull(r) );
+//    printf( "%d\n", (int)pull(r) );
+    /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
 
 
 /* ====================== TEST THREAD_WORK WITHOUT & WITH THREAD =============================== */
@@ -180,18 +185,18 @@ int main(int argc, char *argv[])
 
 /* ====================== TEST THREADPOOL =============================== */
 
-    threadpool_t *p = pool_creation();
-
-
-    for( int i = 0; i < max_conn; i++ )
-    {
-    	threadpool_add( p, print, i );
-    }
-
-
-
-
-    usleep( 10000 );
+//    threadpool_t *p = pool_creation();
+//
+//
+//    for( int i = 0; i < max_conn; i++ )
+//    {
+//    	threadpool_add( p, print, i );
+//    }
+//
+//
+//
+//
+//    usleep( 100000 );
 
 
     return 0;

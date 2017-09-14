@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <assert.h>
 
-int max_conn = 5, num_thread = 3;
+int max_conn = 9, num_thread = 3;
 
 /******************************************************************************
  	 	 	 	 	 	 	 	 CONDITION & LOCK
@@ -70,9 +70,13 @@ void thread_work( void *args )
 
 
 /*********************** START TEST FUNCTION ******************/
+pthread_mutex_t prova = PTHREAD_MUTEX_INITIALIZER;
 void print( void *arg ) //TODO: to be removed
 {
+	pthread_mutex_lock( &prova );
 	printf( "print: %d\n", (int)arg );
+	pthread_mutex_unlock( &prova );
+	usleep( 3000 );
 }
 /*********************** END TEST FUNCTION ******************/
 

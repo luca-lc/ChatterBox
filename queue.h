@@ -1,8 +1,18 @@
-//
-// CHATTERBOX_QUEUE_H
-// Created by Luca Canessa - mat. 516639.
-// Declares that all contents of this file are author's original operas
-//
+/* $ queue_h $ */
+/*
+ * Copyright (c) 2017 Luca Canessa (516639)
+ *
+ * Declares that all contents of this file are author's original operas
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
 
 
 
@@ -46,7 +56,7 @@ typedef struct queue
 ******************************************************************************/
 /**
  * @brief       copy the number of queue elements in a var and returns its
- * @param   q   pointer to queue structs
+ * @param   q   pointer to queue
  * @return      queue size
  */
 unsigned long queue_lenght( queue_t *q );
@@ -67,11 +77,29 @@ queue_t *initialQueue( );
 int push( queue_t *q, void *new_data );
 
 
+
+/**
+ * @breif			extracts from queue the first element and return its info
+ * @param	 q		pointer to queue_t queue type
+ * @return	 		returns pointer to (void *) element about node
+ */
+void *pull( queue_t *q );
+
+
+
+/**
+ * @breif			clears all nodes from queue, updates head, tail and length
+ * @param	 q		pointer to queue to be cleaned
+ */
+void clear_queue( queue_t *q );
+
+
+
 /**
  * @brief       cleans all data from queue and erase its
  * @param   q   pointer to queue to clean
  */
-void clean_all( queue_t *q );
+void destroy_queue( queue_t *q );
 
 
 

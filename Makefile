@@ -63,7 +63,7 @@ HEADER_FILES   = connections.h \
 		  pool.h
 
 
-SOURCE_FILES	= 	queue_t.c		\
+SOURCE_FILES	= 	queue.c		\
 					pool.c
 
 
