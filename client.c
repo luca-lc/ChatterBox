@@ -32,12 +32,12 @@
 
 // tipo di operazione (usata internamente)
 typedef struct {
-    char  *sname;   // nickname del sender
-    char  *rname;   // nickname o groupname del receiver 
-    op_t   op;      // tipo di operazione (se OP_END e' una operazione interna)
-    char  *msg;     // messaggio testuale o nome del file
-    long   size;    // lunghezza del messaggio
-    long   n;       // usato per -R -r
+    char  *sname;   ///< nickname del sender
+    char  *rname;   ///< nickname o groupname del receiver
+    op_t   op;      ///< tipo di operazione (se OP_END e' una operazione interna)
+    char  *msg;     ///< messaggio testuale o nome del file
+    long   size;    ///< lunghezza del messaggio
+    long   n;       ///< usato per -R -r
 } operation_t;
 
 /* -------------------- globali -------------------------- */

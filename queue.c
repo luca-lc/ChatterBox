@@ -1,23 +1,22 @@
-/* $ queue_t_c $ */
+/* @$queue_c$ */
 
-/*
+/**
+ * @file queue.h
+ * @section LICENSE
+ * ****************************************************************************
  * Copyright (c) 2017 Luca Canessa (516639)
  *
  * Declares that all contents of this file are author's original operas
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
-
-
-
-/*
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ * **************************************************************************
+ * @section DESCRIPTION
  * Looking overview
  *
  * In this file there are functions to create and manipulate queues
@@ -68,7 +67,7 @@
  * @brief       allocates space for new queue
  * @return  q   pointer to new queue
  */
-queue_t *initialQueue( )
+queue_t *initialQueue( void )
 {
     queue_t *q = NULL;
 
@@ -119,7 +118,7 @@ int push( queue_t *q, void *new_data )
 	}
 
 
-	q->queue_len += 1;
+	q->queue_len ++;
 
 	return 0;
 }
@@ -127,7 +126,7 @@ int push( queue_t *q, void *new_data )
 
 
 /**
- * @breif			extracts from queue the first queue element
+ * @brief			extracts from queue the first queue element
  * @param	q		pointer to queue
  * @return	ret		pointer to (void *) element in node_t
  */
@@ -148,7 +147,7 @@ void *pull( queue_t *q )
 
 
 /**
- * @breif			clears all nodes from queue, updates head, tail and length
+ * @brief			clears all nodes from queue, updates head, tail and length
  * @param	 q		pointer to queue to be cleaned
  */
 void clear_queue( queue_t *q )

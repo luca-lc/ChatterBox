@@ -163,22 +163,32 @@ int main(int argc, char *argv[])
 /* ====================== TEST THREADPOO_ADD =============================== */
 
     /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
-//    threadpool_t *pool = (threadpool_t *)malloc(max_conn * sizeof( threadpool_t ));
-//    pool->queue_size = max_conn;
-//    pool->head = pool->tail = pool->count = 0;
-//    pool->shutdown = 0;
-//    pool->started = 0;
-//    pool->task = ( thread_task_t * )malloc( max_conn * sizeof( thread_task_t ));
-//    for( int i = 0; i < max_conn; i++ )
+        pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+        queue_t *myq = initialQueue();
+    threadpool_t *pool = (threadpool_t *)malloc(max_conn * sizeof( threadpool_t ));
+    pool->queue_size = max_conn;
+    pool->head = pool->tail = pool->count = 0;
+    pool->shutdown = 0;
+    pool->started = 0;
+    pool->task = ( thread_task_t * )malloc( max_conn * sizeof( thread_task_t ));
+    for( int i = 0; i < max_conn; i++ )
+	{
+		pthread_mutex_lock( &lock );
+		threadpool_add( pool, push, (myq, i+205) );
+		pthread_mutex_unlock( &lock );
+	}
+
+//    while( myq->head != NULL )
 //    {
-//    	threadpool_add( pool, print, i+250 );
+//    	printf( "%d\n", (int)myq->head->ptr );
+//    	myq->head = myq->head->next;
 //    }
-//
-//
-//    for( int j = 0; j < max_conn; j++ )
-//    {
-//    	printf( "arg[%d] %d\n", j, pool->task[j].args );
-//    }
+
+
+    for( int j = 0; j < max_conn; j++ )
+    {
+    	printf( "arg[%d] %d\n", j, pool->task[j].args );
+    }
     /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
 
 
@@ -187,16 +197,27 @@ int main(int argc, char *argv[])
 
 //    threadpool_t *p = pool_creation();
 //
+//    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+//    queue_t *myq = initialQueue();
 //
 //    for( int i = 0; i < max_conn; i++ )
 //    {
-//    	threadpool_add( p, print, i );
+//    	pthread_mutex_lock( &lock );
+//    	threadpool_add( p, push, (myq, i+1995) );
+//    	pthread_mutex_unlock( &lock );
 //    }
 //
-//
-//
-//
-//    usleep( 100000 );
+//    for( int i = 0; i < max_conn; i++ )
+//	{
+//    	pthread_mutex_lock( &lock );
+//		threadpool_add( p, print, (pull, myq ));
+//		pthread_mutex_unlock( &lock );
+//	}
+
+
+
+
+    //usleep( 1000 );
 
 
     return 0;

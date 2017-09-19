@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <assert.h>
+#include <stdarg.h>
 
 int max_conn = 9, num_thread = 3;
 
@@ -73,10 +74,10 @@ void thread_work( void *args )
 pthread_mutex_t prova = PTHREAD_MUTEX_INITIALIZER;
 void print( void *arg ) //TODO: to be removed
 {
-	pthread_mutex_lock( &prova );
+//	pthread_mutex_lock( &prova );
 	printf( "print: %d\n", (int)arg );
-	pthread_mutex_unlock( &prova );
-	usleep( 3000 );
+//	pthread_mutex_unlock( &prova );
+//	usleep( 3000 );
 }
 /*********************** END TEST FUNCTION ******************/
 
