@@ -14,7 +14,7 @@
 #define UNIX_PATH_MAX  64
 #endif
 
-#include <message.h>
+#include <./src/message.h>
 
 /**
  * @file  connection.h

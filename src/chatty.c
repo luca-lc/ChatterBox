@@ -23,11 +23,11 @@
 #include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <stats.h>
-#include <queue.h>
-#include <sign_up.h>
-#include <ops.h>
-#include <pool.h>
+#include <./src/stats.h>
+#include <./src/queue.h>
+#include <./src/sign_up.h>
+#include <./src/ops.h>
+#include <./src/pool.h>
 #include <time.h>
 
 /* inserire gli altri include che servono */

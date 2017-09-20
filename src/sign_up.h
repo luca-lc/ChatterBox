@@ -11,7 +11,7 @@
 #ifndef SIGN_UP_H_
 #define SIGN_UP_H_
 
-#include <ops.h>
+#include <./src/ops.h>
 
 typedef struct usr
 {

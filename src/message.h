@@ -10,8 +10,8 @@
 
 #include <assert.h>
 #include <string.h>
-#include <config.h>
-#include <ops.h>
+#include <./src/config.h>
+#include <./src/ops.h>
 
 /**
  * @file  message.h
