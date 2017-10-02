@@ -23,11 +23,11 @@
 #include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <./src/stats.h>
-#include <./src/queue.h>
-#include <./src/sign_up.h>
-#include <./src/ops.h>
-#include <./src/pool.h>
+#include <src/stats.h>
+#include <src/queue.h>
+#include <src/sign_up.h>
+#include <src/ops.h>
+#include <src/pool.h>
 #include <time.h>
 
 /* inserire gli altri include che servono */
@@ -163,32 +163,32 @@ int main(int argc, char *argv[])
 /* ====================== TEST THREADPOO_ADD =============================== */
 
     /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
-        pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-        queue_t *myq = initialQueue();
-    threadpool_t *pool = (threadpool_t *)malloc(max_conn * sizeof( threadpool_t ));
-    pool->queue_size = max_conn;
-    pool->head = pool->tail = pool->count = 0;
-    pool->shutdown = 0;
-    pool->started = 0;
-    pool->task = ( thread_task_t * )malloc( max_conn * sizeof( thread_task_t ));
-    for( int i = 0; i < max_conn; i++ )
-	{
-		pthread_mutex_lock( &lock );
-		threadpool_add( pool, push, (myq, i+205) );
-		pthread_mutex_unlock( &lock );
-	}
-
+//        pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+//        queue_t *myq = initialQueue();
+//    threadpool_t *pool = (threadpool_t *)malloc(max_conn * sizeof( threadpool_t ));
+//    pool->queue_size = max_conn;
+//    pool->head = pool->tail = pool->count = 0;
+//    pool->shutdown = 0;
+//    pool->started = 0;
+//    pool->task = ( thread_task_t * )malloc( max_conn * sizeof( thread_task_t ));
+//    for( int i = 0; i < max_conn; i++ )
+//	{
+//		pthread_mutex_lock( &lock );
+//		threadpool_add( pool, push, (myq, i+205) );
+//		pthread_mutex_unlock( &lock );
+//	}
+//
 //    while( myq->head != NULL )
 //    {
 //    	printf( "%d\n", (int)myq->head->ptr );
 //    	myq->head = myq->head->next;
 //    }
-
-
-    for( int j = 0; j < max_conn; j++ )
-    {
-    	printf( "arg[%d] %d\n", j, pool->task[j].args );
-    }
+//
+//
+//    for( int j = 0; j < max_conn; j++ )
+//    {
+//    	printf( "arg[%d] %d\n", j, pool->task[j].args );
+//    }
     /* ++++++++++++++++++++++++++ ALL OK +++++++++++++++++++++++++++++++ */
 
 
@@ -214,11 +214,55 @@ int main(int argc, char *argv[])
 //		pthread_mutex_unlock( &lock );
 //	}
 
+//    threadpool_t *pool = ( threadpool_t * )malloc( sizeof( threadpool_t ) );
+//        threadpool_t *pool = ( threadpool_t * )malloc( sizeof( threadpool_t ) );
+//        pool->lock_t = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+//        pool->cond_t = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+//        pool->count = pool->queue_size = max_conn;
+//        pool->task = (thread_task_t *)malloc( max_conn * sizeof(thread_task_t));
+//        for( int i = 0; i < max_conn; i++ )
+//    	{
+//        	pool->task[i].function = print;
+//        	pool->task[i].args = i+3;
+//    	}
 
+        threadpool_t *pool = pool_creation();
+        queue_t *myq = initialQueue();
+        pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    int i = 0;
 
+    while( i <= 20 )
+    {
+    	if( pool->count != max_conn )
+    	{
+    		if( myq->queue_len > 0 )
+    		{
+    			pthread_mutex_lock( &lock );
+    			thread_task_t *new_task = pull( myq );
+				threadpool_add( pool, new_task->function, new_task->args );
+				pthread_mutex_unlock( &lock);
+    		}
+    		else
+    		{
+    			pthread_mutex_lock( &lock );
+    			threadpool_add( pool, print, i );
+    			pthread_mutex_unlock( &lock );
+    		}
+    	}
+    	else
+    	{
+    		thread_task_t *new_task = ( thread_task_t *)malloc( sizeof( thread_task_t ) );
+    		new_task->function = print;
+    		new_task->args = i;
 
-    //usleep( 1000 );
+    		push( myq, new_task );
+    		//sleep( 20 );
+    	}
+        sleep( 1 );
+    	i++;
+    }
 
+    sleep( 20 );
 
     return 0;
 }

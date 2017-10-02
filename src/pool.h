@@ -35,6 +35,7 @@ typedef struct task
 {
 	void(*function)(void *);
 	void *args;
+	int next;
 }thread_task_t;
 
 typedef struct pool
@@ -45,11 +46,10 @@ typedef struct pool
 	pthread_cond_t cond_t;
 	int thread_crt;
 	int queue_size;
-	int head;
-	int tail;
 	int count;
 	int shutdown;
 	int started;
+	int next_max;
 }threadpool_t;
 
 

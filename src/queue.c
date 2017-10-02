@@ -118,7 +118,7 @@ int push( queue_t *q, void *new_data )
 	}
 
 
-	q->queue_len ++;
+	q->queue_len += 1;
 
 	return 0;
 }

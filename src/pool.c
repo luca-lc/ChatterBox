@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <time.h>
+#include <math.h>
 
 int max_conn = 9, num_thread = 3;
 
@@ -41,11 +43,11 @@ void thread_work( void *args )
 	while( pool->count > 0 )
 	{
 		pthread_mutex_lock( &(pool->lock_t) );
-//		while( pool->count == 0 )
-//		{
-//			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
-//
-//		}
+		while( pool->count == 0 )
+		{
+			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
+
+		}
 //
 //		if( pool->shutdown == 0)
 //		{
@@ -54,14 +56,26 @@ void thread_work( void *args )
 //			exit( EXIT_SUCCESS );
 //		}
 
-		i++;
-		tasks.function = pool->task[pool->head].function;
-		tasks.args = pool->task[pool->head].args;
-		pool->head = ( pool->head + 1 ) % ( pool->queue_size );
+		int min = +INFINITY, min_i = -1;
+		for( int i = 0; i < max_conn; i++ )
+		{
+			if( pool->task[i].next < min && pool->task[i].function != NULL )
+			{
+				min = pool->task[i].next;
+				min_i = i;
+			}
+		}
+
+		tasks.function = pool->task[min_i].function;
+		tasks.args = pool->task[min_i].args;
+
+		pool->task[min_i].function = NULL;
 		pool->count -= 1;
 
 		pthread_mutex_unlock( &(pool->lock_t) );
 
+		sleep(5);
+		printf( "count %d", pool->count );
 
 		( *(tasks.function) )( tasks.args );
 	}
@@ -93,7 +107,7 @@ threadpool_t *pool_creation( )
 	// INITIALIZATION
 	pool->thread_crt = 0;
 	pool->queue_size = max_conn; //external variable
-	pool->head = pool->tail = pool->count = 0;
+	pool->count = 0;
 	pool->shutdown = pool->started = 0;
 
 
@@ -108,6 +122,13 @@ threadpool_t *pool_creation( )
 		fprintf( stderr, "Problem to allocate space for queuetask" );
 		exit( EXIT_FAILURE );
 	}
+	for( int i = 0; i < max_conn; i++ )
+	{
+		pool->task[i].function = NULL;
+		pool->task[i].args = NULL;
+		pool->task[i].next = -1;
+	}
+	pool->next_max = 0;
 
 
 	pool->lock_t = ( pthread_mutex_t )PTHREAD_MUTEX_INITIALIZER;
@@ -132,8 +153,6 @@ threadpool_t *pool_creation( )
 
 int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 {
-	int next;
-
 	if( pool == NULL || function == NULL )
 	{
 		return -1;
@@ -144,23 +163,27 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 		return -1;
 	}
 
-	next = ( pool->tail + 1 ) % pool->queue_size;
-
-	if( pool->count == pool->queue_size )
-	{
-		return -1;
-	}
+//	if( pool->count == pool->queue_size )
+//	{
+//		return -1;
+//	}
 
 	if( pool->shutdown )
 	{
 		return -1;
 	}
 
-	pool->task[pool->tail].function = function;
-	pool->task[pool->tail].args = args;
-	pool->tail = next;
-	pool->count += 1;
+	int i = 0;
+	while( pool->task[i].function != NULL )
+	{
+		i++;
+	}
 
+	pool->task[i].function = function;
+	pool->task[i].args = args;
+	pool->task[i].next = pool->next_max += 1;
+	pool->count += 1;
+	printf( "%d\n", pool->count );
 
 	if( pthread_cond_signal( &(pool->cond_t) ) != 0 )
 	{

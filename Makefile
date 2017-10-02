@@ -9,8 +9,8 @@
 ##########################################################
 # IMPORTANTE: completare la lista dei file da consegnare
 #
-FILE_DA_CONSEGNARE=Makefile chatty.c message.h ops.h stats.h config.h \
-		   config/chatty.conf1 config/chatty.conf2 connections.h
+FILE_DA_CONSEGNARE=Makefile src/chatty.c src/message.h src/ops.h src/stats.h src/config.h \
+		   config/chatty.conf1 config/chatty.conf2 src/connections.h
 # inserire il nome del tarball: es. NinoBixio
 TARNAME=LucaCanessa
 # inserice il corso di appartenenza: CorsoA oppure CorsoB
