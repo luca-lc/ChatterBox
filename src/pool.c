@@ -14,23 +14,18 @@
 #include <time.h>
 #include <math.h>
 
-int max_conn = 9, num_thread = 3;
-
-/******************************************************************************
- 	 	 	 	 	 	 	 	 CONDITION & LOCK
-******************************************************************************/
-//pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-//pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-
-typedef enum {
-    immediate_shutdown = 1,
-    graceful_shutdown  = 2
-} threadpool_shutdown_t;
 
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
+int max_conn = 4, num_thread = 20;
 
+
+
+/**
+ * @brief		function to extract from queue the first task added and run it
+ * @var	args	pointer to thread pool to can extract the task and its args
+ */
 void thread_work( void *args )
 {
 	threadpool_t *pool = ( threadpool_t * )args;
@@ -48,7 +43,7 @@ void thread_work( void *args )
 			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
 
 		}
-//
+//	TODO: stop execution
 //		if( pool->shutdown == 0)
 //		{
 //			pthread_mutex_unlock( &(pool->lock_t) );
@@ -71,30 +66,21 @@ void thread_work( void *args )
 
 		pool->task[min_i].function = NULL;
 		pool->count -= 1;
-
+		pthread_cond_broadcast( &(pool->cond_t) );
 		pthread_mutex_unlock( &(pool->lock_t) );
 
 		sleep(5);
-		printf( "count %d", pool->count );
 
 		( *(tasks.function) )( tasks.args );
 	}
-
 }
 
 
 
-/*********************** START TEST FUNCTION ******************/
-pthread_mutex_t prova = PTHREAD_MUTEX_INITIALIZER;
-void print( void *arg ) //TODO: to be removed
-{
-//	pthread_mutex_lock( &prova );
-	printf( "print: %d\n", (int)arg );
-//	pthread_mutex_unlock( &prova );
-//	usleep( 3000 );
-}
-/*********************** END TEST FUNCTION ******************/
-
+/**
+ * @brief			function to create and initialize a thread pool
+ * @return	pool	pointer to thread pool created
+ */
 threadpool_t *pool_creation( )
 {
 	threadpool_t *pool;
@@ -139,7 +125,7 @@ threadpool_t *pool_creation( )
 	{
 		if( pthread_create( &(pool->thread[i]), NULL, thread_work, pool ) != 0 )
 		{
-			//threadpool_destroy( pool, 0 ); //TODO: to uncomment
+			//threadpool_destroy( pool, 0 ); //TODO: destroy function
 			fprintf( stderr, "Problem to create thread" );
 			exit( EXIT_FAILURE );
 		}
@@ -171,6 +157,13 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 	if( pool->shutdown )
 	{
 		return -1;
+	}
+
+	while( pool->count ==  max_conn )
+	{
+		fprintf( stderr, "\n\nWAIT: QUEUE IS FULL\n\n" );
+		pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
+
 	}
 
 	int i = 0;
