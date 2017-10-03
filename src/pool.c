@@ -1,3 +1,16 @@
+/* $pool.c$ */
+/**
+ * @section LICENSE
+ * ****************************************************************************
+ * Copyright (c)2017 Luca Canessa (516639)                                    *
+ *                                                                            *
+ * Declares that all contents of this file are author's original operas       *
+ *                                                                            *
+ ******************************************************************************
+*/
+
+
+
 /******************************************************************************
  	 	 	 	 	 	 	 	 	 HEADER
 ******************************************************************************/
@@ -15,10 +28,18 @@
 #include <math.h>
 
 
+
+/******************************************************************************
+							MUTEX & CONDITION VARIABLES
+******************************************************************************/
+pthread_mutex_t lock_pool = PTHREAD_MUTEX_INITIALIZER;
+
+
+
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
-int max_conn = 4, num_thread = 20;
+int max_conn = 4, num_thread = 20; //TODO: check variables
 
 
 
@@ -92,9 +113,8 @@ threadpool_t *pool_creation( )
 
 	// INITIALIZATION
 	pool->thread_crt = 0;
-	pool->queue_size = max_conn; //external variable
+	pool->queue_size = max_conn; ///< external variable
 	pool->count = 0;
-	pool->shutdown = pool->started = 0;
 
 
 	if( (pool->thread = ( pthread_t * )malloc( num_thread * sizeof( pthread_t ) ) ) == NULL )
@@ -129,7 +149,6 @@ threadpool_t *pool_creation( )
 			fprintf( stderr, "Problem to create thread" );
 			exit( EXIT_FAILURE );
 		}
-		pool->started += 1;
 		pool->thread_crt += 1;
 	}
 
@@ -137,6 +156,15 @@ threadpool_t *pool_creation( )
 }
 
 
+
+/**
+ * @brief			function to add task in queue to run by thread pool
+ * @var	pool		pointer to thread pool where add task
+ * @var	function	pointer to function that represents the task to run
+ * @var	args		pointer to args of 'function' task
+ * @return	0		if function terminates without issues
+ * 			-1		otherwise
+ */
 int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 {
 	if( pool == NULL || function == NULL )
@@ -161,7 +189,7 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 
 	while( pool->count ==  max_conn )
 	{
-		fprintf( stderr, "\n\nWAIT: QUEUE IS FULL\n\n" );
+		fprintf( stderr, "\n\nWAIT: QUEUE IS FULL\n\n" ); //TODO: check wait condition and error message
 		pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
 
 	}
@@ -176,7 +204,6 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 	pool->task[i].args = args;
 	pool->task[i].next = pool->next_max += 1;
 	pool->count += 1;
-	printf( "%d\n", pool->count );
 
 	if( pthread_cond_signal( &(pool->cond_t) ) != 0 )
 	{
@@ -192,78 +219,110 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 	return 0;
 }
 
-/*
-int threadpool_free(threadpool_t *pool)
+
+
+/**
+ * @brief		function to free queue of thread, queue of tasks and thread pool. !!! CAUTION: run in safe mode, with mutex lock for all pool struct !!!
+ * @var	pool	pointer to thread pool to be destroyed
+ * @return	0	if all data structure is destroyed
+ * 			-1	otherwise
+ */
+int threadpool_free( threadpool_t *pool )
 {
-    if(pool == NULL || pool->started > 0) {
+    if(pool == NULL || pool->count > 0)
+    {
         return -1;
     }
 
-    //Did we manage to allocate ?
-    if(pool->thread) {
+    pthread_mutex_lock( &lock_pool );
+    if(pool->thread)
+    {
         free(pool->thread);
         free(pool->task);
 
-        // Because we allocate pool->threads after initializing the
-        //   mutex and condition variable, we're sure they're
-        //   initialized. Let's lock the mutex just in case.
-        pthread_mutex_lock(&(pool->lock_t));
         pthread_mutex_destroy(&(pool->lock_t));
         pthread_cond_destroy(&(pool->cond_t));
     }
-    free(pool);
+
+    free( pool );
+    pthread_mutex_unlock( &lock_pool );
     return 0;
 }
 
-int threadpool_destroy(threadpool_t *pool, int flags)
+
+
+/**
+ * @brief			function to stop worker thread immediately or after finished their jobs and destroy all pool
+ * @var	pool		pointer to pool to destroy
+ * @var	power_off	flag to stop worker, if 0 then stop immediately else stop when there are no more works
+ * @return	err		0 if terminates without errors, else -1
+ */
+int threadpool_destroy( threadpool_t *pool, int power_off )
 {
-    int i, err = 0;
+    int err = 0;
 
-    if(pool == NULL) {
-        return -1;
+    if(pool == NULL)
+    {
+        err = -1;
     }
 
-    if(pthread_mutex_lock(&(pool->lock_t)) != 0) {
-        return -1;
+    if(pthread_mutex_lock(&(pool->lock_t)) != 0)
+    {
+        err = -1;
     }
 
-    do {
-        //Already shutting down
-        if(pool->shutdown) {
-            err = -1;
-            break;
-        }
+	//already shutting down
+	if(pool->shutdown)
+	{
+		err = -1;
+	}
 
-        pool->shutdown = (flags && threadpool_graceful) ?
-            graceful_shutdown : immediate_shutdown;
+	pool->shutdown = ( power_off && threadpool_graceful ) ? graceful_shutdown : immediate_shutdown;
 
-        //Wake up all worker threads
-        if((pthread_cond_broadcast(&(pool->cond_t)) != 0) ||
-           (pthread_mutex_unlock(&(pool->lock_t)) != 0)) {
-            return -1;
-        }
+	//wake up all worker threads
+	if( pool->shutdown )
+	{
+		if( pthread_cond_broadcast( &(pool->cond_t) ) != 0 )
+		{
+			err = -1;
+		}
+	}
 
-        //Join all worker thread
-        for(i = 0; i < pool->thread_crt; i++) {
-            if(pthread_join(pool->thread[i], NULL) != 0) {
-                return -1;
-            }
-        }
-    } while(0);
+	if( pthread_mutex_unlock( &(pool->lock_t) ) != 0 )
+	{
+		err = -1;
+	}
 
-    //Only if everything went well do we deallocate the pool
-    if(!err) {
-        threadpool_free(pool);
+	//join all worker thread
+	for( int i = 0; i < pool->thread_crt; i++ )
+	{
+		if( pthread_join( pool->thread[i], NULL ) != 0 )
+		{
+			err = -1;
+		}
+	}
+
+
+    //only if all ok deallocates the pool
+    if( err != -1 )
+    {
+    	printf( "ropso1" );
+        printf( "\nfree pool: %d\n", threadpool_free( pool ) );
     }
+
+
     return err;
 }
 
 
 
+/**
+ * @brief		function to stop immediately all threads
+ * @var	pool	pointer to the thread pool where is var to control shutting down
+ */
 void thread_stop( threadpool_t *pool )
 {
 	pthread_mutex_lock( &(pool->lock_t) );
 	pool->shutdown = 0;
 	pthread_mutex_unlock( &(pool->lock_t) );
 }
-*/

@@ -126,11 +126,19 @@ int main(int argc, char *argv[])
     while( i < 30 )
     {
     	threadpool_add( p, complex_op, myarg );
-    	i++;
+    	if( i == 9 )
+    	{
+    		printf( "\ndestroy: %d\n", threadpool_destroy( p, 0 ) );
+    		break;
+    	}
+    	else
+    	{
+    		i++;
+    	}
     }
 
 
-    sleep( 90 );
-
+    sleep( 10 );
+    printf( "after work: %d\n", p->queue_size );
     return 0;
 }

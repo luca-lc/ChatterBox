@@ -2,11 +2,12 @@
 /**
  * @section LICENSE
  * ****************************************************************************
- * Copyright (c)2017 Luca Canessa (516639)                                   *
+ * Copyright (c)2017 Luca Canessa (516639)                                    *
  *                                                                            *
  * Declares that all contents of this file are author's original operas       *
  *                                                                            *
- ******************************************************************************/
+ ******************************************************************************
+*/
 
 
 
@@ -73,6 +74,7 @@ typedef struct task
  * @var queue_size	var to know the queue length of tasks
  * @var count		var to know the number of tasks entered
  * @var next_max	var to know the last task entered
+ * @var shutdown	var to stop thread worker: if 1 waits to end all works else stops immediately
  */
 typedef struct pool
 {
@@ -84,10 +86,8 @@ typedef struct pool
 	int queue_size;
 	int count;
 	int shutdown;
-	int started;
 	int next_max;
 }threadpool_t;
-
 
 
 
@@ -127,16 +127,23 @@ threadpool_t *pool_creation( );
 int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args );
 
 
-/*
- *
+
+/**
+ * @brief			function to stop worker thread immediately or after finished their jobs and destroy all pool
+ * @var	pool		pointer to pool to destroy
+ * @var	power_off	flag to stop worker, if 0 then stop immediately else stop when there are no more works
+ * @return			0 if terminates without errors, else -1
+ */
+int threadpool_destroy(threadpool_t *pool, int flags);
+
+
+
+/**
+ * @brief		function to stop immediately all threads
+ * @var	pool	pointer to the thread pool where is var to control shutting down
  */
 void thread_stop( threadpool_t *pool );
 
-
-
-int threadpool_free(threadpool_t *pool);
-
-int threadpool_destroy(threadpool_t *pool, int flags);
 
 
 #endif
