@@ -103,9 +103,9 @@ typedef enum {
 ******************************************************************************/
 /**
  * @brief		function to run task passed
- * @var	args	pointer to argument to run task (pointer to task and its arg)
+ * @var	pool	pointer to thread pool where are tasks to extract
  */
-void thread_work( void *args );
+void thread_work( threadpool_t *pool );
 
 
 

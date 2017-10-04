@@ -63,11 +63,13 @@ HEADER_FILES   = $(SOURCE_DIR)/connections.h \
 		  $(SOURCE_DIR)/stats.h       \
 		  $(SOURCE_DIR)/config.h		\
 		  $(SOURCE_DIR)/queue.h		\
-		  $(SOURCE_DIR)/pool.h
+		  $(SOURCE_DIR)/pool.h 		\
+		  $(SOURCE_DIR)/hashtable.h
 
 
 SOURCE_FILES	= 	$(SOURCE_DIR)/queue.c \
-					$(SOURCE_DIR)/pool.c
+					$(SOURCE_DIR)/pool.c	\
+					$(SOURCE_DIR)/hashtable.c
 
 
 .PHONY: all clean cleanall test1 test2 test3 test4 test5 consegna

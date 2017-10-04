@@ -1,5 +1,7 @@
 /* $pool.c$ */
+
 /**
+ * @file pool.c
  * @section LICENSE
  * ****************************************************************************
  * Copyright (c)2017 Luca Canessa (516639)                                    *
@@ -7,7 +9,35 @@
  * Declares that all contents of this file are author's original operas       *
  *                                                                            *
  ******************************************************************************
-*/
+ * @section DESCRIPTION
+ * Looking overview
+ *
+ * In this file there are functions to create and manipulate threads pool
+ *
+ * thread_work( ) : Extracts task from queue in thread pool and run this
+ * 					Requires pointer to a thread pool where is possible extract
+ * 					a task and its arguments.
+ *
+ * pool_creation(): Creates a new threadpool_t thread pool type and initialize
+ * 					its elements.
+ * 					Returns pointer to new thread pool.
+ *
+ * threadpool_add():Adds a task in queue that be run later.
+ * 					Requires pointer to thread pool where add the task, pointer
+ * 					to function that represents task and pointer to its
+ * 					arguments
+ * 					Returns 0 if the task is added, else -1
+ *
+ * threadpool_free():Removes queues of thread and tasks and then destroy pool
+ * 					Requires pointer to thread pool.
+ * 					Returns 0 if remove them, else -1.
+ *
+ * threadpool_destroy():Stops all worker threads then remove all threads from
+ * 					queue and call 'threadpool_free()' to remove other elements
+ *
+ * thread_stop():	Puts the 0 value at shutdown variable that used to stop threads
+ *					Requires pointer to thread pool where threads to stop
+ */
 
 
 
@@ -39,21 +69,17 @@ pthread_mutex_t lock_pool = PTHREAD_MUTEX_INITIALIZER;
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
-int max_conn = 4, num_thread = 20; //TODO: check variables
+int max_conn = 20, num_thread = 20; //TODO: check variables
 
 
 
 /**
  * @brief		function to extract from queue the first task added and run it
- * @var	args	pointer to thread pool to can extract the task and its args
+ * @var	pool	pointer to thread pool to can extract the task and its args
  */
-void thread_work( void *args )
+void thread_work( threadpool_t *pool )
 {
-	threadpool_t *pool = ( threadpool_t * )args;
-
 	thread_task_t tasks;
-
-
 
 	int i = 0;
 	while( pool->count > 0 )

@@ -25,10 +25,11 @@
 #include <fcntl.h>
 #include <src/stats.h>
 #include <src/queue.h>
-#include <src/sign_up.h>
+#include <src/signup.h>
 #include <src/ops.h>
 #include <src/pool.h>
 #include <time.h>
+#include <src/hashtable.h>
 
 /* inserire gli altri include che servono */
 
@@ -117,28 +118,15 @@ int main(int argc, char *argv[])
 //
 //	TEST
 //
-    threadpool_t *p = pool_creation();
-    srand(time(NULL));
-	arg *myarg = ( arg * )malloc( sizeof( arg ) );
-	myarg->a = (int *)malloc( 500 * sizeof( int ) );
-	myarg->dim = 500;
-    int i = 0;
-    while( i < 30 )
-    {
-    	threadpool_add( p, complex_op, myarg );
-    	if( i == 9 )
-    	{
-    		printf( "\ndestroy: %d\n", threadpool_destroy( p, 0 ) );
-    		break;
-    	}
-    	else
-    	{
-    		i++;
-    	}
-    }
 
+    hashtable_t *t = initTable( max_conn );
+    printf( "prova %d", t->size);
+    int t1 = insert( t, "luca" );
+    int t2 = insert( t, "lucas" );
 
-    sleep( 10 );
-    printf( "after work: %d\n", p->queue_size );
-    return 0;
+    printf( "\nelem: %d\t", t->n_elem);
+    ht_elem_t *p = pull( t->elem[t1].collision);
+    printf( "%s\t%d\n%s\t%d\n", t->elem[t1].nickname, t->elem[t1].key, p->nickname, p->key );
+
+	return 0;
 }

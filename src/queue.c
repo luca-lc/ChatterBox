@@ -4,17 +4,10 @@
  * @file queue.h
  * @section LICENSE
  * ****************************************************************************
- * Copyright (c) 2017 Luca Canessa (516639)
- *
- * Declares that all contents of this file are author's original operas
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * Copyright (c) 2017 Luca Canessa (516639)									  *
+ *																			  *
+ * Declares that all contents of this file are author's original operas		  *
+ * 																			  *
  * **************************************************************************
  * @section DESCRIPTION
  * Looking overview
