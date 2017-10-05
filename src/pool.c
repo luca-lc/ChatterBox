@@ -69,7 +69,7 @@ pthread_mutex_t lock_pool = PTHREAD_MUTEX_INITIALIZER;
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
-int max_conn = 20, num_thread = 20; //TODO: check variables
+int max_conn = 3, num_thread = 1; //TODO: check variables
 
 
 

@@ -20,6 +20,7 @@
  	 	 	 	 	 	 	 	 	 HEADER
 ******************************************************************************/
 #include <src/queue.h>
+#include <src/pool.h>
 
 
 
@@ -55,6 +56,7 @@ typedef struct ht
 ******************************************************************************/
 hashtable_t *initTable( unsigned int length );
 void insert( hashtable_t *table, char *name );
+bool search( hashtable_t *table, char *name );
 
 
 

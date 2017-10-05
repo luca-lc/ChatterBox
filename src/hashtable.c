@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <src/pool.h>
 #include <src/hashtable.h>
+#include <string.h>
 
 
 
@@ -82,10 +83,14 @@ void insert( hashtable_t *table, char *name )
 	{
 		table->elem[val].nickname = name;
 		table->elem[val].key = val;
-		table->elem[val].collision = initialQueue();
+		table->elem[val].collision = NULL;
 	}
 	else
 	{
+		if( table->elem[val].collision == NULL )
+		{
+			table->elem[val].collision = initialQueue();
+		}
 		ht_elem_t *tmp = (ht_elem_t*)malloc( sizeof( ht_elem_t) );
 		tmp->nickname = name;
 		tmp->key = val;
@@ -101,6 +106,37 @@ void insert( hashtable_t *table, char *name )
 /**
  *
  */
+bool search( hashtable_t *table, char *name )
+{
+	int val = hashVal( name[0] );
 
+	if( table->elem[val].nickname != NULL )
+	{
+		if( strcmp(table->elem[val].nickname, name) == 0 )
+			{
+				return true;
+			}
+			else
+			{
+				ht_elem_t *tmp = NULL;
+				if( table->elem[val].collision != NULL && table->elem[val].collision->head != NULL )
+				{
+					node_t *nt = table->elem[val].collision->head;
+					tmp = nt->ptr;
+					while( strcmp(tmp->nickname,name)!=0 && nt != NULL )
+					{
+						tmp = nt->ptr;
+						nt = nt->next;
+					}
+					if( strcmp(tmp->nickname, name) == 0 )
+					{
+						return true;
+					}
+				}
+			}
+	}
+
+	return false;
+}
 
 

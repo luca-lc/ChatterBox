@@ -119,14 +119,47 @@ int main(int argc, char *argv[])
 //	TEST
 //
 
+    //threadpool_t *p = pool_creation();
+
     hashtable_t *t = initTable( max_conn );
     printf( "prova %d", t->size);
-    int t1 = insert( t, "luca" );
-    int t2 = insert( t, "lucas" );
 
-    printf( "\nelem: %d\t", t->n_elem);
-    ht_elem_t *p = pull( t->elem[t1].collision);
-    printf( "%s\t%d\n%s\t%d\n", t->elem[t1].nickname, t->elem[t1].key, p->nickname, p->key );
+
+    for( int i = 0; i < 5; i++ )
+    {
+    	char *c = ( char * )malloc( 20 * sizeof( char ) );
+    	scanf( "%s", c );
+    	insert( t, c );
+    }
+
+    printf( "elem: %d", t->n_elem );
+
+
+    for( int i = 0; i < max_conn; i++ )
+    {
+    	printf( "\n\n%s", t->elem[i].nickname );
+    	if( t->elem[i].collision != NULL )
+    	{
+    		for( node_t *n = t->elem[i].collision->head; n != NULL; n = n->next )
+    		{
+    			ht_elem_t *e = n->ptr;
+    			printf( "\t%s\n",  e->nickname );
+    		}
+    	}
+    }
+
+
+    for( int i = 0; i < 5; i++ )
+    {
+    	char *c = ( char * )malloc( 20 * sizeof( char ) );
+    	scanf( "%s", c );
+    	printf( "%s found: %d", c, search( t, c ) );
+    }
+
+
+
+
+
 
 	return 0;
 }
