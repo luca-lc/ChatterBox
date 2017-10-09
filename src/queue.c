@@ -88,8 +88,6 @@ queue_t *initialQueue( void )
  */
 int push( queue_t *q, void *new_data )
 {
-
-
 	if( q->tail->ptr == NULL )
 	{
 		q->tail->ptr = new_data;

@@ -21,6 +21,7 @@
 ******************************************************************************/
 #include <src/queue.h>
 #include <src/pool.h>
+#include "src/chatty.h"
 
 
 
@@ -28,7 +29,10 @@
 							   STRUCTURES & TYPES
 ******************************************************************************/
 /**
- *
+ * @struct			defines new data structure for hash table element
+ * @var	nickname	var to save user nickname
+ * @var	size		var to save the key used to calculate the hash value
+ * @var	collision	pointer to queue of collision element
  */
 typedef struct hash_elem
 {
@@ -40,7 +44,10 @@ typedef struct hash_elem
 
 
 /**
- *
+ * @struct			defines new data structure for hash table
+ * @var	elem		pointer to hash table element
+ * @var	size		var to save the length of hash table
+ * @var n_elem		var to know the number of elements in hash table
  */
 typedef struct ht
 {
@@ -55,7 +62,7 @@ typedef struct ht
 								   FUNCTIONS
 ******************************************************************************/
 hashtable_t *initTable( unsigned int length );
-void insert( hashtable_t *table, char *name );
+int insert( hashtable_t *table, char *name );
 bool search( hashtable_t *table, char *name );
 
 

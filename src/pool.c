@@ -44,8 +44,8 @@
 /******************************************************************************
  	 	 	 	 	 	 	 	 	 HEADER
 ******************************************************************************/
-#include <./src/queue.h>
-#include "./pool.h"
+#include <src/queue.h>
+#include <src/pool.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,6 +56,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <math.h>
+#include <src/signup.h>
 
 
 
@@ -69,7 +70,7 @@ pthread_mutex_t lock_pool = PTHREAD_MUTEX_INITIALIZER;
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
-int max_conn = 3, num_thread = 1; //TODO: check variables
+int max_conn = 10, num_thread = 4; //TODO: check variables
 
 
 
@@ -81,14 +82,12 @@ void thread_work( threadpool_t *pool )
 {
 	thread_task_t tasks;
 
-	int i = 0;
-	while( pool->count > 0 )
+	while( pool->count >= 0 )
 	{
 		pthread_mutex_lock( &(pool->lock_t) );
 		while( pool->count == 0 )
 		{
 			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
-
 		}
 //	TODO: stop execution
 //		if( pool->shutdown == 0)
@@ -113,10 +112,8 @@ void thread_work( threadpool_t *pool )
 
 		pool->task[min_i].function = NULL;
 		pool->count -= 1;
-		pthread_cond_broadcast( &(pool->cond_t) );
+		pthread_cond_signal( &(pool->cond_t) );
 		pthread_mutex_unlock( &(pool->lock_t) );
-
-		sleep(5);
 
 		( *(tasks.function) )( tasks.args );
 	}
@@ -191,9 +188,9 @@ threadpool_t *pool_creation( )
  * @return	0		if function terminates without issues
  * 			-1		otherwise
  */
-int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
+int threadpool_add( threadpool_t *pool, void(*functions)(void *), void *arg )
 {
-	if( pool == NULL || function == NULL )
+	if( pool == NULL || functions == NULL )
 	{
 		return -1;
 	}
@@ -217,7 +214,6 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 	{
 		fprintf( stderr, "\n\nWAIT: QUEUE IS FULL\n\n" ); //TODO: check wait condition and error message
 		pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
-
 	}
 
 	int i = 0;
@@ -226,8 +222,8 @@ int threadpool_add( threadpool_t *pool, void(*function)(void *), void *args )
 		i++;
 	}
 
-	pool->task[i].function = function;
-	pool->task[i].args = args;
+	pool->task[i].function = functions;
+	pool->task[i].args = arg;
 	pool->task[i].next = pool->next_max += 1;
 	pool->count += 1;
 
@@ -332,7 +328,6 @@ int threadpool_destroy( threadpool_t *pool, int power_off )
     //only if all ok deallocates the pool
     if( err != -1 )
     {
-    	printf( "ropso1" );
         printf( "\nfree pool: %d\n", threadpool_free( pool ) );
     }
 

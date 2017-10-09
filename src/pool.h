@@ -36,12 +36,6 @@ extern int max_conn, num_thread;	///< max_conn is number of max connection to ha
 									///< num_thread is number of thread that operates in threadpool_t
 
 
-typedef enum{
-	false,
-	true
-}bool;		///< definition of bool type for ease of use
-
-
 
 typedef enum {
     threadpool_graceful       = 1

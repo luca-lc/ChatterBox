@@ -75,15 +75,18 @@ hashtable_t *initTable( unsigned int length )
 /**
  *
  */
-void insert( hashtable_t *table, char *name )
+int insert( hashtable_t *table, char *name )
 {
 	int val = hashVal( name[0] );
 
 	if( table->elem[val].nickname == NULL )
 	{
-		table->elem[val].nickname = name;
-		table->elem[val].key = val;
+		table->elem[val].nickname = (char *)malloc( 250 * sizeof( char ) );
+		strcpy( table->elem[val].nickname, name );
+		table->elem[val].key = name[0];
 		table->elem[val].collision = NULL;
+		table->n_elem += 1;
+		return 1;
 	}
 	else
 	{
@@ -91,14 +94,19 @@ void insert( hashtable_t *table, char *name )
 		{
 			table->elem[val].collision = initialQueue();
 		}
-		ht_elem_t *tmp = (ht_elem_t*)malloc( sizeof( ht_elem_t) );
-		tmp->nickname = name;
-		tmp->key = val;
+		ht_elem_t *tmp = (ht_elem_t *)malloc( sizeof( ht_elem_t ) );
+		tmp->nickname = ( char * )malloc( 250 * sizeof( char ) );
+		strcpy(tmp->nickname, name);
+		tmp->key = name[0];
 		tmp->collision = NULL;
-		push( table->elem[val].collision, tmp );
+		if( push( table->elem[val].collision, tmp ) == 0 )
+		{
+			table->n_elem += 1;
+			return 1;
+		}
 	}
 
-	table->n_elem += 1;
+	return -1;
 }
 
 
@@ -113,27 +121,27 @@ bool search( hashtable_t *table, char *name )
 	if( table->elem[val].nickname != NULL )
 	{
 		if( strcmp(table->elem[val].nickname, name) == 0 )
+		{
+			return true;
+		}
+		else
+		{
+			ht_elem_t *tmp = NULL;
+			if( table->elem[val].collision != NULL && table->elem[val].collision->head != NULL )
 			{
-				return true;
-			}
-			else
-			{
-				ht_elem_t *tmp = NULL;
-				if( table->elem[val].collision != NULL && table->elem[val].collision->head != NULL )
+				node_t *nt = table->elem[val].collision->head;
+				tmp = nt->ptr;
+				while( strcmp(tmp->nickname,name)!=0 && nt != NULL )
 				{
-					node_t *nt = table->elem[val].collision->head;
 					tmp = nt->ptr;
-					while( strcmp(tmp->nickname,name)!=0 && nt != NULL )
-					{
-						tmp = nt->ptr;
-						nt = nt->next;
-					}
-					if( strcmp(tmp->nickname, name) == 0 )
-					{
-						return true;
-					}
+					nt = nt->next;
+				}
+				if( strcmp(tmp->nickname, name) == 0 )
+				{
+					return true;
 				}
 			}
+		}
 	}
 
 	return false;

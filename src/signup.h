@@ -16,14 +16,26 @@
 #ifndef SIGNUP_H_
 #define SIGNUP_H_
 
-#include <./src/ops.h>
+#include <src/ops.h>
+#include <src/hashtable.h>
+#include "src/chatty.h"
 
+
+
+
+typedef struct signuparg
+{
+	hashtable_t *myt;
+	char *name;
+}checkin_arg;
 
 /******************************************************************************
 									FUNCTIONS
 ******************************************************************************/
-
-
+/**
+ *
+ */
+bool checkin( checkin_arg *c_arg );
 
 
 #endif /* SIGN_UP_H_ */

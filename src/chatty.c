@@ -30,6 +30,8 @@
 #include <src/pool.h>
 #include <time.h>
 #include <src/hashtable.h>
+#include "src/chatty.h"
+#include "src/prova.h"
 
 /* inserire gli altri include che servono */
 
@@ -48,11 +50,6 @@ static void usage(const char *progname)
 {
     fprintf( stderr, "Il server va lanciato con il seguente comando:\n" );
     fprintf( stderr, "  %s -f <conffile>\n", progname );
-}
-
-void print( void *arg )
-{
-	printf( "print: %d\n", (int)arg );
 }
 
 typedef struct complex_Arg
@@ -119,47 +116,27 @@ int main(int argc, char *argv[])
 //	TEST
 //
 
-    //threadpool_t *p = pool_creation();
+    threadpool_t *p = pool_creation();
 
     hashtable_t *t = initTable( max_conn );
-    printf( "prova %d", t->size);
+
+    checkin_arg *ar = ( checkin_arg *)malloc(sizeof( checkin_arg ) );
+    ar->name = (char *)malloc( 20 * sizeof( char ) );
+	ar->myt = t;
+
+//	for( int i = 0; i < max_conn; i++ )
+//	{
+//		printf( "inserisci\t" );
+//		gets( ar->name );
+//		threadpool_add( p, checkin, ar );
+//
+//	}
+	printf( "\n\n\n" );
+
+	for( int i = 0; i < max_conn; i++ )
+		threadpool_add( p, print, NULL );
 
 
-    for( int i = 0; i < 5; i++ )
-    {
-    	char *c = ( char * )malloc( 20 * sizeof( char ) );
-    	scanf( "%s", c );
-    	insert( t, c );
-    }
-
-    printf( "elem: %d", t->n_elem );
-
-
-    for( int i = 0; i < max_conn; i++ )
-    {
-    	printf( "\n\n%s", t->elem[i].nickname );
-    	if( t->elem[i].collision != NULL )
-    	{
-    		for( node_t *n = t->elem[i].collision->head; n != NULL; n = n->next )
-    		{
-    			ht_elem_t *e = n->ptr;
-    			printf( "\t%s\n",  e->nickname );
-    		}
-    	}
-    }
-
-
-    for( int i = 0; i < 5; i++ )
-    {
-    	char *c = ( char * )malloc( 20 * sizeof( char ) );
-    	scanf( "%s", c );
-    	printf( "%s found: %d", c, search( t, c ) );
-    }
-
-
-
-
-
-
+sleep( 10 );
 	return 0;
 }
