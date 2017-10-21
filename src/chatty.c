@@ -31,7 +31,6 @@
 #include <time.h>
 #include <src/hashtable.h>
 #include "src/chatty.h"
-#include "src/prova.h"
 
 /* inserire gli altri include che servono */
 
@@ -52,26 +51,6 @@ static void usage(const char *progname)
     fprintf( stderr, "  %s -f <conffile>\n", progname );
 }
 
-typedef struct complex_Arg
-{
-		int *a;
-		int dim;
-}arg;
-
-void complex_op( void *args )
-{
-	arg *myargs = (arg*)args;
-	for( int i = 0; i < myargs->dim; i++ )
-	{
-		int t = rand();
-		myargs->a[i] = t;
-	}
-
-	for( int i = 0; i < myargs->dim; i++ )
-	{
-		print( myargs->a[i] );
-	}
-}
 
 /******************************************************************************
                                     MAIN
@@ -112,9 +91,9 @@ int main(int argc, char *argv[])
         }
     }
 
-//
-//	TEST
-//
+
+//TEST
+
 
     threadpool_t *p = pool_creation();
 
@@ -124,19 +103,66 @@ int main(int argc, char *argv[])
     ar->name = (char *)malloc( 20 * sizeof( char ) );
 	ar->myt = t;
 
-//	for( int i = 0; i < max_conn; i++ )
-//	{
-//		printf( "inserisci\t" );
-//		gets( ar->name );
-//		threadpool_add( p, checkin, ar );
-//
-//	}
+	for( int i = 0; i < 4; i++ )
+	{
+		printf( "inserisci\t" );
+		gets( ar->name );
+		threadpool_add( p, checkin, ar );
+	}
+
 	printf( "\n\n\n" );
+	sleep( 2 );
+
+	printf( "rimuovi?\n" );
+	gets( ar->name );
+
+	printf( "%d\n",  delete( ar ) );
+
+
 
 	for( int i = 0; i < max_conn; i++ )
-		threadpool_add( p, print, NULL );
+	{
+		if( t->elem[i].nickname != NULL )
+		{
+			printf( "%s\n", t->elem[i].nickname );
+
+			if( t->elem[i].collision != NULL )
+			{
+				node_t *n = t->elem[i].collision->head;
+				while( n != NULL )
+				{
+					ht_elem_t *e = n->ptr;
+					printf( "\t\t%s\n", e->nickname );
+					n = n->next;
+				}
+			}
+		}
+
+	}
 
 
-sleep( 10 );
+    queue_t *myq = initialQueue();
+    push( myq, "luca" );
+    push( myq, "lucia" );
+    push( myq, "luciano" );
+
+    node_t *tmp = myq->head;
+    while( tmp != NULL )
+    {
+    	printf( "ORIGINAL: %s\t", tmp->ptr );
+    	tmp = tmp->next;
+    }
+
+    printf("\n\n\nOUT: %s\n\n", pull( myq ) );
+
+    tmp = myq->head;
+    while( tmp != NULL )
+	{
+		printf( "LAST: %s\t", tmp->ptr );
+		tmp = tmp->next;
+	}
+
+
+	fprintf( stdout, "OK FATTO\n" );
 	return 0;
 }

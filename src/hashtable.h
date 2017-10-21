@@ -61,9 +61,41 @@ typedef struct ht
 /******************************************************************************
 								   FUNCTIONS
 ******************************************************************************/
+/**
+ * @brief		creates and initializes the hash table and set all parameters
+ * @var	length	number of cells to insert in hash table
+ * return		pointer to hash table created
+ */
 hashtable_t *initTable( unsigned int length );
-int insert( hashtable_t *table, char *name );
+
+
+
+/**
+ * @brief		inserts an element in hash table (hash value is calculated from first letter of string)
+ * @var	table	pointer to hash table where insert the new element
+ * @var	name	pointer to string that represents the nickname to insert
+ * @return		true if terminate without errors
+ * 				false otherwise
+ */
+bool insert( hashtable_t *table, char *name );
+
+
+
+/**
+ * @brief		searches a nickname in hash table
+ * @var	table	pointer to hash table where search user
+ * @var name	pointer to string where is written the nickname to search
+ * @return		true if user is present
+ * 				false otherwise
+ */
 bool search( hashtable_t *table, char *name );
+
+
+
+/**
+ *
+ */
+S
 
 
 

@@ -7,7 +7,7 @@
 typedef enum{
 	false,
 	true
-}bool;		///< definition of bool type for ease of use
+}bool;		///< definition of bool type
 
 
 #endif /* CHATTY_H */

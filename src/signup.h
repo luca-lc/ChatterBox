@@ -23,7 +23,7 @@
 
 
 
-typedef struct signuparg
+typedef struct args
 {
 	hashtable_t *myt;
 	char *name;
@@ -37,5 +37,11 @@ typedef struct signuparg
  */
 bool checkin( checkin_arg *c_arg );
 
+
+
+///**
+// *
+// */
+//bool delete( checkin_arg *c_arg );
 
 #endif /* SIGN_UP_H_ */

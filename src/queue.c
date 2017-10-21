@@ -16,7 +16,6 @@
  *
  * initialQueue() : Allocates space for new queue_t queue type with nodes_t nodes
  * 					type. The structure of queue was thought as FIFO type.
- * 					Requires (nothing).
  * 					Returns pointer to this queue
  *
  * push() 		  : Creates a new node_t node type and insert in ptr element
@@ -36,7 +35,8 @@
  *
  *
  *
- * destroy_queue():	requires pointer to queue_t queue to be destroyed.
+ * destroy_queue():	//TODO
+ * 					Requires pointer to queue_t queue to be destroyed.
  * 					Removes all elements from queue and destroys queue
  *
  *
@@ -46,7 +46,8 @@
 /******************************************************************************
                                     HEADER
 ******************************************************************************/
-#include "queue.h"
+#include <src/queue.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -55,12 +56,14 @@
 /******************************************************************************
 									FUNCTIONS
 ******************************************************************************/
+pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
+
 
 /**
  * @brief       allocates space for new queue
  * @return  q   pointer to new queue
  */
-queue_t *initialQueue( void )
+queue_t *initialQueue()
 {
     queue_t *q = NULL;
 
@@ -90,8 +93,10 @@ int push( queue_t *q, void *new_data )
 {
 	if( q->tail->ptr == NULL )
 	{
+		pthread_mutex_lock( &queue_lock );
 		q->tail->ptr = new_data;
 		q->tail->next = NULL;
+		pthread_mutex_unlock( &queue_lock );
 	}
 	else
 	{
@@ -104,12 +109,15 @@ int push( queue_t *q, void *new_data )
 		newn->ptr = new_data;
 		newn->next = NULL;
 
+		pthread_mutex_lock( &queue_lock );
 		q->tail->next = newn;
 		q->tail = newn;
+		pthread_mutex_unlock( &queue_lock );
 	}
 
-
+	pthread_mutex_lock( &queue_lock );
 	q->queue_len += 1;
+	pthread_mutex_unlock( &queue_lock );
 
 	return 0;
 }
@@ -126,9 +134,11 @@ void *pull( queue_t *q )
 	node_t *tmp = NULL;
 
 	tmp = (node_t *)q->head;
-	q->head = q->head->next;
 
+	pthread_mutex_lock( &queue_lock );
+	q->head = q->head->next;
 	q->queue_len -= 1;
+	pthread_mutex_unlock( &queue_lock );
 
 	void *ret = tmp->ptr;
 
