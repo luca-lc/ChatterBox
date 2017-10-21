@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     ar->name = (char *)malloc( 20 * sizeof( char ) );
 	ar->myt = t;
 
-	for( int i = 0; i < 4; i++ )
+	for( int i = 0; i < 10; i++ )
 	{
 		printf( "inserisci\t" );
 		gets( ar->name );
@@ -112,13 +112,6 @@ int main(int argc, char *argv[])
 
 	printf( "\n\n\n" );
 	sleep( 2 );
-
-	printf( "rimuovi?\n" );
-	gets( ar->name );
-
-	printf( "%d\n",  delete( ar ) );
-
-
 
 	for( int i = 0; i < max_conn; i++ )
 	{
@@ -140,29 +133,59 @@ int main(int argc, char *argv[])
 
 	}
 
-
-    queue_t *myq = initialQueue();
-    push( myq, "luca" );
-    push( myq, "lucia" );
-    push( myq, "luciano" );
-
-    node_t *tmp = myq->head;
-    while( tmp != NULL )
-    {
-    	printf( "ORIGINAL: %s\t", tmp->ptr );
-    	tmp = tmp->next;
-    }
-
-    printf("\n\n\nOUT: %s\n\n", pull( myq ) );
-
-    tmp = myq->head;
-    while( tmp != NULL )
+	for( int i = 0; i < 4; i++ )
 	{
-		printf( "LAST: %s\t", tmp->ptr );
-		tmp = tmp->next;
+		printf( "\nrimuovi?\n" );
+		gets( ar->name );
+
+
+		printf( "%d\n",  delete( ar ) );
+
+
+		for( int i = 0; i < max_conn; i++ )
+		{
+			if( t->elem[i].nickname != NULL )
+			{
+				printf( "%s\n", t->elem[i].nickname );
+
+				if( t->elem[i].collision != NULL )
+				{
+					node_t *n = t->elem[i].collision->head;
+					while( n != NULL )
+					{
+						ht_elem_t *e = n->ptr;
+						printf( "\t\t%s\n", e->nickname );
+						n = n->next;
+					}
+				}
+			}
+
+		}
 	}
-
-
-	fprintf( stdout, "OK FATTO\n" );
+//
+//
+//    queue_t *myq = initialQueue();
+//    push( myq, "luca" );
+//    push( myq, "lucia" );
+//    push( myq, "luciano" );
+//
+//    node_t *tmp = myq->head;
+//    while( tmp != NULL )
+//    {
+//    	printf( "ORIGINAL: %s\t", tmp->ptr );
+//    	tmp = tmp->next;
+//    }
+//
+//    printf("\n\n\nOUT: %s\n\n", pull( myq ) );
+//
+//    tmp = myq->head;
+//    while( tmp != NULL )
+//	{
+//		printf( "LAST: %s\t", tmp->ptr );
+//		tmp = tmp->next;
+//	}
+//
+//
+	fprintf( stdout, "\nOK FATTO\n" );
 	return 0;
 }

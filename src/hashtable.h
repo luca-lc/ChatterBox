@@ -95,7 +95,7 @@ bool search( hashtable_t *table, char *name );
 /**
  *
  */
-S
+bool removing( hashtable_t *table, char *name );
 
 
 

@@ -207,8 +207,6 @@ bool search( hashtable_t *table, char *name )
  */
 bool removing( hashtable_t *table, char *name )
 {
-	bool out = false;
-
 	int val = hashVal( name[0] );
 
 	//removes nickname that is in hash table
@@ -224,11 +222,12 @@ bool removing( hashtable_t *table, char *name )
 
 			free( first_elem );
 
-			return out;
+			return true;
 		}
 		else //replaces nickname with NULL
 		{
 			table->elem[val].nickname = NULL;
+			return true;
 		}
 	}
 	else //removes nickname that is in the overflow queue
@@ -271,5 +270,5 @@ bool removing( hashtable_t *table, char *name )
 		}
 	}
 
-	return out;
+	return false;
 }

@@ -69,13 +69,13 @@ bool checkin( checkin_arg *arg )
 /**
  *
  */
-//bool deleting( checkin_arg *arg )
-//{
-//	bool out = false;
-//	if( search( arg->myt, arg->name) == true )
-//	{
-//		out = removing( arg->myt, arg->name );
-//	}
-//
-//	return out;
-//}
+bool delete( checkin_arg *arg )
+{
+	bool out = false;
+	if( search( arg->myt, arg->name) == true )
+	{
+		out = removing( arg->myt, arg->name );
+	}
+
+	return out;
+}
