@@ -30,14 +30,20 @@
  * insert()    :	Inserts element user in hash table
  * 					Requires pointer to hash table where insert user and pointer
  * 					to string where is saved the name of user
- * 					Returns a bool type declared in 'chatty.h' file where
+ * 					Returns a bool value declared in 'chatty.h' file where
  * 					'true' is represented by 1 and 'false' by 0
  *
- * search()		:	Search a nickname in hash table using
+ * search()		:	Search a nickname in hash table
  * 					Requires pointer to hash table where search and pointer to
  * 					string that represents the nickname to search
- * 					Returns a bool type declared in 'chatty.h' file where
+ * 					Returns a bool value declared in 'chatty.h' file where
  * 					'true' is represented by 1 and 'false' by 0
+ *
+ * removing()	:	Removes a nickname from hash table
+ *					Requires pointer to hash table where remove the user and
+ *					pointer to string where is saved the name of user
+ *					Returns a bool value declared in 'chatty.h' file where
+ *					'true' is represented by 1 and 'false' by 0
 */
 
 
@@ -66,9 +72,14 @@ pthread_mutex_t hash_lock = PTHREAD_MUTEX_INITIALIZER;	///< declaration of mutex
  * @var	key		value of key => first letter of nickname
  * @return		hash value calculated with division method from key value and number of cells of hash table
  */
-int hashVal( int key )
+int hashVal1( int key )
 {
-	return ( key % max_conn );
+	return ( key % 4 );
+}
+
+int hashVal2( int key )
+{
+	return ( ( key * (4-1) ) % 4 );
 }
 
 
@@ -117,44 +128,47 @@ hashtable_t *initTable( unsigned int length )
  */
 bool insert( hashtable_t *table, char *name )
 {
-	int val = hashVal( name[0] );
+	int val = hashVal1( name[0] );
+	int step = hashVal2( name[0] );
 
-	if( table->elem[val].nickname == NULL )
+	if( table->elem[val].nickname == NULL || strcmp( table->elem[val].nickname, "__EMPTY__") != 0 )
 	{
 		pthread_mutex_lock( &hash_lock );
 		table->elem[val].nickname = (char *)malloc( 250 * sizeof( char ) );
 		strcpy( table->elem[val].nickname, name );
 		table->elem[val].key = name[0];
-		table->elem[val].collision = NULL;
 		table->n_elem += 1;
 		pthread_mutex_unlock( &hash_lock );
 		return true;
 	}
 	else
 	{
-		if( table->elem[val].collision == NULL )
+		while( table->elem[val].nickname != NULL && strcmp( table->elem[val].nickname, "__EMPTY__") != 0 )
 		{
-			table->elem[val].collision = initialQueue();
+			val = ( val + step ) % max_conn;
 		}
-		ht_elem_t *tmp = (ht_elem_t *)malloc( sizeof( ht_elem_t ) );
-		tmp->nickname = ( char * )malloc( 250 * sizeof( char ) );
-		strcpy(tmp->nickname, name);
-		tmp->key = name[0];
-		tmp->collision = NULL;
-		if( push( table->elem[val].collision, tmp ) == 0 )
+
+		pthread_mutex_lock( &hash_lock );
+		if( strcmp(table->elem[val].nickname, "__EMPTY__") == 0)
 		{
+			memset( &table->elem[val].nickname[0], 0, sizeof(table->elem[val].nickname) );
+			strcpy( table->elem[val].nickname, name );
+			table->elem[val].key = name[0];
 			table->n_elem += 1;
+			pthread_mutex_unlock( &hash_lock );
 			return true;
 		}
 		else
 		{
-			fprintf( stderr, "Problem to registering the user\n" );
-			free( tmp );
-			return false;
+			pthread_mutex_lock( &hash_lock );
+			table->elem[val].nickname = (char *)malloc( 250 * sizeof( char ) );
+			strcpy( table->elem[val].nickname, name );
+			table->elem[val].key = name[0];
+			table->n_elem += 1;
+			pthread_mutex_unlock( &hash_lock );
+			return true;
 		}
 	}
-
-	printf( "puppa" );
 	return false;
 }
 
@@ -169,106 +183,91 @@ bool insert( hashtable_t *table, char *name )
  */
 bool search( hashtable_t *table, char *name )
 {
-	int val = hashVal( name[0] );
+	int val = hashVal1( name[0] );
+	int step = hashVal2( name[0] );
 
-	if( table->elem[val].nickname != NULL )
+	while( table->elem[val].nickname != NULL && strcmp( table->elem[val].nickname, name ) != 0 )
 	{
-		if( strcmp(table->elem[val].nickname, name) == 0 )
-		{
-			return true;
-		}
-		else
-		{
-			ht_elem_t *tmp = NULL;
-			if( table->elem[val].collision != NULL && table->elem[val].collision->head != NULL )
-			{
-				node_t *nt = table->elem[val].collision->head;
-				tmp = nt->ptr;
-				while( strcmp(tmp->nickname,name) != 0 && nt != NULL )
-				{
-					tmp = nt->ptr;
-					nt = nt->next;
-				}
-				if( strcmp(tmp->nickname, name) == 0 )
-				{
-					return true;
-				}
-			}
-		}
+		val = ( val + step ) % 4;
 	}
 
-	return false;
+	return true;
 }
 
 
 
 /**
- *
+ * @brief		removes from hash table a nickname. If nickname is in a cell and the overflow queue is empty, is replaced with NULL.
+ * 				If nickname is in a cell and the overflow queue has at least an element, is replaced with the first element in the queue.
+ * 				If nickaname is in the overflow queue then is removed from its.
+ * @var	table 	pointer to hash table where removing the nickname
+ * @var name	pointer to string where is saved the nickname to remove
+ * @return		true if nickname was removed
+ * 				false otherwise
  */
-bool removing( hashtable_t *table, char *name )
-{
-	int val = hashVal( name[0] );
-
-	//removes nickname that is in hash table
-	if( strcmp( table->elem[val].nickname, name) == 0 )
-	{
-		if( table->elem[val].collision != NULL ) //replaces this nickname with the first element in the overflow queue
-		{
-			ht_elem_t *first_elem = pull( table->elem[val].collision );
-
-			pthread_mutex_lock( &hash_lock );
-			strcpy( table->elem[val].nickname, first_elem->nickname );
-			pthread_mutex_unlock( &hash_lock );
-
-			free( first_elem );
-
-			return true;
-		}
-		else //replaces nickname with NULL
-		{
-			table->elem[val].nickname = NULL;
-			return true;
-		}
-	}
-	else //removes nickname that is in the overflow queue
-	{
-		ht_elem_t *e = NULL;
-		if( table->elem[val].collision != NULL && table->elem[val].collision->head != NULL ) //if there is at least one element in the overflow queue
-		{
-			node_t *node = table->elem[val].collision->head;
-			e = node->ptr;
-			node_t *prev = NULL;
-
-			while( strcmp( e->nickname, name) != 0 && node != NULL ) //selects the node of the queue
-			{
-				prev = node;
-				node = node->next;
-				e = node->ptr;
-			}
-
-			if( node != NULL )
-			{
-				if( prev == NULL ) //if the first element
-				{
-					pthread_mutex_lock( &hash_lock );
-					table->elem[val].collision->head = table->elem[val].collision->head->next;
-					free(node);
-					pthread_mutex_unlock( &hash_lock );
-
-					return true;
-				}
-				else //if is in the queue in some position
-				{
-					pthread_mutex_lock( &hash_lock );
-					prev->next = node->next;
-					free( node );
-					pthread_mutex_unlock( &hash_lock );
-
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
+//bool removing( hashtable_t *table, char *name )
+//{
+//	int val = hashVal( name[0] );
+//
+//	//removes nickname that is in hash table
+//	if( strcmp( table->elem[val].nickname, name) == 0 )
+//	{
+//		if( table->elem[val].collision != NULL ) //replaces this nickname with the first element in the overflow queue
+//		{
+//			ht_elem_t *first_elem = pull( table->elem[val].collision );
+//
+//			pthread_mutex_lock( &hash_lock );
+//			strcpy( table->elem[val].nickname, first_elem->nickname );
+//			pthread_mutex_unlock( &hash_lock );
+//
+//			free( first_elem );
+//
+//			return true;
+//		}
+//		else //replaces nickname with NULL
+//		{
+//			table->elem[val].nickname = NULL;
+//			return true;
+//		}
+//	}
+//	else //removes nickname that is in the overflow queue
+//	{
+//		ht_elem_t *e = NULL;
+//		if( table->elem[val].collision != NULL && table->elem[val].collision->head != NULL ) //if there is at least one element in the overflow queue
+//		{
+//			node_t *node = table->elem[val].collision->head;
+//			e = node->ptr;
+//			node_t *prev = NULL;
+//
+//			while( strcmp( e->nickname, name) != 0 && node != NULL ) //selects the node of the queue
+//			{
+//				prev = node;
+//				node = node->next;
+//				e = node->ptr;
+//			}
+//
+//			if( node != NULL )
+//			{
+//				if( prev == NULL ) //if the first element
+//				{
+//					pthread_mutex_lock( &hash_lock );
+//					table->elem[val].collision->head = table->elem[val].collision->head->next;
+//					free(node);
+//					pthread_mutex_unlock( &hash_lock );
+//
+//					return true;
+//				}
+//				else //if is in the queue in some position
+//				{
+//					pthread_mutex_lock( &hash_lock );
+//					prev->next = node->next;
+//					free( node );
+//					pthread_mutex_unlock( &hash_lock );
+//
+//					return true;
+//				}
+//			}
+//		}
+//	}
+//	return false;
+//}

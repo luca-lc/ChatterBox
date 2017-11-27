@@ -25,7 +25,7 @@
 #include <fcntl.h>
 #include <src/stats.h>
 #include <src/queue.h>
-#include <src/signup.h>
+//#include <src/signup.h>
 #include <src/ops.h>
 #include <src/pool.h>
 #include <time.h>
@@ -95,73 +95,75 @@ int main(int argc, char *argv[])
 //TEST
 
 
-    threadpool_t *p = pool_creation();
+//    threadpool_t *p = pool_creation();
+//
+//    hashtable_t *t = initTable( max_conn );
+//
+//    checkin_arg *ar = ( checkin_arg *)malloc(sizeof( checkin_arg ) );
+//    ar->name = (char *)malloc( 20 * sizeof( char ) );
+//	ar->myt = t;
+//
+//	for( int i = 0; i < 10; i++ )
+//	{
+//		printf( "inserisci\t" );
+//		gets( ar->name );
+//		threadpool_add( p, checkin, ar );
+//	}
+//
+//	printf( "\n\n\n" );
+//	sleep( 2 );
+//
+//	for( int i = 0; i < max_conn; i++ )
+//	{
+//		if( t->elem[i].nickname != NULL )
+//		{
+//			printf( "%s\n", t->elem[i].nickname );
+//
+//			if( t->elem[i].collision != NULL )
+//			{
+//				node_t *n = t->elem[i].collision->head;
+//				while( n != NULL )
+//				{
+//					ht_elem_t *e = n->ptr;
+//					printf( "\t\t%s\n", e->nickname );
+//					n = n->next;
+//				}
+//			}
+//		}
+//
+//	}
+//
+//	for( int i = 0; i < 4; i++ )
+//	{
+//		printf( "\nrimuovi?\n" );
+//		gets( ar->name );
+//
+//
+//		printf( "%d\n",  delete( ar ) );
+//
+//
+//		for( int i = 0; i < max_conn; i++ )
+//		{
+//			if( t->elem[i].nickname != NULL )
+//			{
+//				printf( "%s\n", t->elem[i].nickname );
+//
+//				if( t->elem[i].collision != NULL )
+//				{
+//					node_t *n = t->elem[i].collision->head;
+//					while( n != NULL )
+//					{
+//						ht_elem_t *e = n->ptr;
+//						printf( "\t\t%s\n", e->nickname );
+//						n = n->next;
+//					}
+//				}
+//			}
+//
+//		}
+//	}
+//
 
-    hashtable_t *t = initTable( max_conn );
-
-    checkin_arg *ar = ( checkin_arg *)malloc(sizeof( checkin_arg ) );
-    ar->name = (char *)malloc( 20 * sizeof( char ) );
-	ar->myt = t;
-
-	for( int i = 0; i < 10; i++ )
-	{
-		printf( "inserisci\t" );
-		gets( ar->name );
-		threadpool_add( p, checkin, ar );
-	}
-
-	printf( "\n\n\n" );
-	sleep( 2 );
-
-	for( int i = 0; i < max_conn; i++ )
-	{
-		if( t->elem[i].nickname != NULL )
-		{
-			printf( "%s\n", t->elem[i].nickname );
-
-			if( t->elem[i].collision != NULL )
-			{
-				node_t *n = t->elem[i].collision->head;
-				while( n != NULL )
-				{
-					ht_elem_t *e = n->ptr;
-					printf( "\t\t%s\n", e->nickname );
-					n = n->next;
-				}
-			}
-		}
-
-	}
-
-	for( int i = 0; i < 4; i++ )
-	{
-		printf( "\nrimuovi?\n" );
-		gets( ar->name );
-
-
-		printf( "%d\n",  delete( ar ) );
-
-
-		for( int i = 0; i < max_conn; i++ )
-		{
-			if( t->elem[i].nickname != NULL )
-			{
-				printf( "%s\n", t->elem[i].nickname );
-
-				if( t->elem[i].collision != NULL )
-				{
-					node_t *n = t->elem[i].collision->head;
-					while( n != NULL )
-					{
-						ht_elem_t *e = n->ptr;
-						printf( "\t\t%s\n", e->nickname );
-						n = n->next;
-					}
-				}
-			}
-
-		}
-	}
 //
 //
 //    queue_t *myq = initialQueue();
@@ -186,6 +188,19 @@ int main(int argc, char *argv[])
 //	}
 //
 //
+
+
+    hashtable_t *tb = initTable( 4 );
+
+    insert( tb, "luca" );
+    insert( tb, "ciao" );
+//
+    printf( "%d\n", search( tb, "luca" ) );
+    printf( "%d\n", search( tb, "ciao" ) );
+    printf( "%d\n", search( tb, "pippo" ) );
+
+
+
 	fprintf( stdout, "\nOK FATTO\n" );
 	return 0;
 }

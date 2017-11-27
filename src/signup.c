@@ -21,6 +21,12 @@
  * 					Returns true if terminates putting the user in the hash table
  * 					false otherwise
  *
+ * delete()		:	Deletes a nickname from hash table
+ * 					Requires a pointer to data structure where saved pointer to
+ * 					hash table and pointer to string where is nickname to
+ * 					remove
+ * 					Returns a bool value where 'true' represented by 1 and
+ * 					'false' by 0
 */
 
 
@@ -44,7 +50,11 @@ pthread_mutex_t reg_lock = PTHREAD_MUTEX_INITIALIZER;
 									FUNCTIONS
 ******************************************************************************/
 /**
- *
+ * @brief		enters the user in the hash table to record it
+ * @var arg		pointer to data structure where saved the pointer to hash table
+ * 				and pointer to string where saved the nickname to register
+ * @return 		true if user is logged
+ * 				false otherwise
  */
 bool checkin( checkin_arg *arg )
 {
@@ -67,14 +77,18 @@ bool checkin( checkin_arg *arg )
 
 
 /**
- *
+ * @brief		deletes the user from hash table
+ * @var arg		pointer to data structure where saved the pointer to hash table
+ * 				and pointer to string where saved the nickname to remove
+ * @return		true if user is removed
+ * 				false otherwise
  */
 bool delete( checkin_arg *arg )
 {
 	bool out = false;
 	if( search( arg->myt, arg->name) == true )
 	{
-		out = removing( arg->myt, arg->name );
+		//out = removing( arg->myt, arg->name );
 	}
 
 	return out;
