@@ -39,9 +39,9 @@ bool checkin( checkin_arg *c_arg );
 
 
 
-///**
-// *
-// */
+/**
+ *
+ */
 bool delete( checkin_arg *c_arg );
 
 #endif /* SIGN_UP_H_ */

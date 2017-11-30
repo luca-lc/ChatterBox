@@ -50,14 +50,6 @@ typedef struct queue
                                     FUNCTIONS
 ******************************************************************************/
 /**
- * @brief       copy the number of queue elements in a var and returns its
- * @param   q   pointer to queue
- * @return      queue size
- */
-unsigned long queue_lenght( queue_t *q );
-
-
-/**
  * @brief       allocates space for new queue
  * @return      pointer to new queue
  */

@@ -38,6 +38,7 @@ typedef struct hash_elem
 {
 	char *nickname;
 	int key;
+	queue_t *collision;
 }ht_elem_t;
 
 
@@ -92,11 +93,7 @@ bool search( hashtable_t *table, char *name );
 
 
 /**
- * @brief		removes a nickname from hash table
- * @var table	pointer to hash table where removing user
- * @var name	pointer to string where is saved nickname of user
- * @return		true if removes user
- * 				false otherwise
+ *
  */
 bool removing( hashtable_t *table, char *name );
 

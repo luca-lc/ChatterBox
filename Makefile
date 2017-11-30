@@ -91,7 +91,7 @@ all		: $(TARGETS)
 
 
 $(BIN_DIR)/chatty: $(BIN_DIR)/chatty.o $(LIB_DIR)/libchatty.a $(HEADER_FILES) $(SOURCE_FILES)
-	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) -lm
 
 #client: client.o connections.o message.h
 #	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)

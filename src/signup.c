@@ -62,7 +62,7 @@ bool checkin( checkin_arg *arg )
 	if( (out = search( arg->myt, arg->name )) == false )
 	{
 		pthread_mutex_lock( &reg_lock );
-		out = insert( arg->myt, arg->name );
+			out = insert( arg->myt, arg->name );
 		pthread_mutex_unlock( &reg_lock );
 		return out;
 	}
@@ -88,7 +88,7 @@ bool delete( checkin_arg *arg )
 	bool out = false;
 	if( search( arg->myt, arg->name) == true )
 	{
-		//out = removing( arg->myt, arg->name );
+		out = removing( arg->myt, arg->name );
 	}
 
 	return out;
