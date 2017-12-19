@@ -49,8 +49,8 @@ OPTFLAGS	= #-O3
 LIBS            = -lpthread
 
 # aggiungere qui altri targets se necessario
-TARGETS		= $(BIN_DIR)/chatty        #\
-		  client
+TARGETS		= $(BIN_DIR)/chatty        \
+		  $(BIN_DIR)/client
 
 
 # aggiungere qui i file oggetto da compilare
@@ -71,7 +71,8 @@ HEADER_FILES   = $(SOURCE_DIR)/connections.h \
 SOURCE_FILES	= 	$(SOURCE_DIR)/queue.c \
 					$(SOURCE_DIR)/pool.c	\
 					$(SOURCE_DIR)/hashtable.c \
-					$(SOURCE_DIR)/signup.c
+					$(SOURCE_DIR)/signup.c	\
+					$(SOURCE_DIR)/connections.c
 
 
 .PHONY: all clean cleanall test1 test2 test3 test4 test5 consegna
@@ -86,6 +87,9 @@ $(SOURCE_DIR)/%.o: $(SOURCE_DIR)/%.h $(SOURCE_DIR)/%.c
 $(BIN_DIR)/chatty.o: $(SOURCE_DIR)/chatty.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
 
+$(BIN_DIR)/client.o: $(SOURCE_DIR)/test_client.c
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
+	
 
 all		: $(TARGETS)
 
@@ -93,8 +97,8 @@ all		: $(TARGETS)
 $(BIN_DIR)/chatty: $(BIN_DIR)/chatty.o $(LIB_DIR)/libchatty.a $(HEADER_FILES) $(SOURCE_FILES)
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) -lm
 
-#client: client.o connections.o message.h
-#	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+$(BIN_DIR)/client: $(BIN_DIR)/client.o $(SOURCE_DIR)/message.h $(HEADER_FILES) $(SOURCE_FILES) #$(BIN_DIR)/connections.o
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 ############################ non modificare da qui in poi
 

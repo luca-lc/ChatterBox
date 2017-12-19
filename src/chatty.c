@@ -29,6 +29,8 @@
 #include <src/ops.h>
 #include <src/pool.h>
 #include <time.h>
+#include <ctype.h>
+#include <src/connections.h>
 #include <src/hashtable.h>
 #include "src/chatty.h"
 
@@ -50,6 +52,57 @@ static void usage(const char *progname)
     fprintf( stderr, "Il server va lanciato con il seguente comando:\n" );
     fprintf( stderr, "  %s -f <conffile>\n", progname );
 }
+
+
+
+
+void mng_conn( int arg )
+{
+	//int c_fd = (int)arg;
+	printf( "Connection management has been started...\n" );
+	message_t msg;
+	char buff[50];
+	char tmp[256];
+	while( true )
+	{
+		if ( readHeader( arg, &msg.hdr ) <= 0)
+		{
+			printf( "error\n" );
+			return;
+		}
+		else
+		{
+			printf( "Sender:\t%s\n", msg.hdr.sender );
+			printf( "OP:\t%d\n", msg.hdr.op );
+			sleep( 1 );
+		}
+		if( readData( arg, &msg.data ) <= 0 )
+		{
+			printf( "error\n" );
+			return;
+		}
+		else
+		{
+			printf( "Receiver:\t%s\n", msg.data.hdr.receiver );
+			printf( "Sender say:\t%s\n", msg.data.buf );
+			sleep( 1 );
+		}
+//		if( readMsg( arg, &msg ) <= 0 )
+//		{
+//			printf( "error\n" );
+//			return;
+//		}
+//		else
+//		{
+//			printf( "Sender say:\t%s\n", msg.data.buf );
+//			return;
+//		}
+		return;
+
+	}
+}
+
+
 
 
 /******************************************************************************
@@ -94,98 +147,35 @@ int main(int argc, char *argv[])
 
 //TEST
 
+    unlink(SOCKNAME);
 
-    threadpool_t *p = pool_creation();
+    threadpool_t *mypool = pool_creation( );
 
-    hashtable_t *t = initTable( max_conn );
+    int s_fd, c_fd;
 
-    checkin_arg *ar = ( checkin_arg *)malloc(sizeof( checkin_arg ) );
-    ar->name = (char *)malloc( 20 * sizeof( char ) );
-	ar->myt = t;
+    struct sockaddr_un se;
+    strncpy( se.sun_path, SOCKNAME, UNIX_PATH_MAX );
+    se.sun_family = AF_UNIX;
 
-	for( int i = 0; i < 10; i++ )
-	{
-		printf( "inserisci\t" );
-		gets( ar->name );
-		threadpool_add( p, checkin, ar );
-	}
+    s_fd = socket( AF_UNIX, SOCK_STREAM, 0 );
+    bind( s_fd, (struct sockaddr *)&se, sizeof(se) );
+    listen( s_fd, max_conn );
 
-	printf( "\n\n\n" );
-	sleep( 2 );
-
-	for( int i = 0; i < max_conn; i++ )
-	{
-		if( t->elem[i].nickname != NULL )
-		{
-			printf( "%s\n", t->elem[i].nickname );
-
-			if( t->elem[i].collision != NULL )
-			{
-				node_t *n = t->elem[i].collision->head;
-				while( n != NULL )
-				{
-					ht_elem_t *e = n->ptr;
-					printf( "\t\t%s\n", e->nickname );
-					n = n->next;
-				}
-			}
-		}
-
-	}
-
-	for( int i = 0; i < 4; i++ )
-	{
-		printf( "\nrimuovi?\n" );
-		gets( ar->name );
+    while( true )
+    {
+    	c_fd = accept( s_fd, NULL, 0 );
+    	if( c_fd != -1 )
+    	{
+    		threadpool_add( mypool, mng_conn, (int)c_fd );
+    	}
+    	else
+    	{
+    		fprintf( stderr, "ERROR ESTABLISHING CONNECTION\n");
+    		continue;
+    	}
+    }
 
 
-		printf( "%d\n",  delete( ar ) );
-
-
-		for( int i = 0; i < max_conn; i++ )
-		{
-			if( t->elem[i].nickname != NULL )
-			{
-				printf( "%s\n", t->elem[i].nickname );
-
-				if( t->elem[i].collision != NULL )
-				{
-					node_t *n = t->elem[i].collision->head;
-					while( n != NULL )
-					{
-						ht_elem_t *e = n->ptr;
-						printf( "\t\t%s\n", e->nickname );
-						n = n->next;
-					}
-				}
-			}
-
-		}
-	}
-//
-//
-//    queue_t *myq = initialQueue();
-//    push( myq, "luca" );
-//    push( myq, "lucia" );
-//    push( myq, "luciano" );
-//
-//    node_t *tmp = myq->head;
-//    while( tmp != NULL )
-//    {
-//    	printf( "ORIGINAL: %s\t", tmp->ptr );
-//    	tmp = tmp->next;
-//    }
-//
-//    printf("\n\n\nOUT: %s\n\n", pull( myq ) );
-//
-//    tmp = myq->head;
-//    while( tmp != NULL )
-//	{
-//		printf( "LAST: %s\t", tmp->ptr );
-//		tmp = tmp->next;
-//	}
-//
-//
-	fprintf( stdout, "\nOK FATTO\n" );
+    //fprintf( stdout, "\nOK FATTO\n" );
 	return 0;
 }

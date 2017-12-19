@@ -27,8 +27,8 @@
 #include <sys/mman.h>
 
 
-#include <connections.h>
-#include <ops.h>
+#include <src/connections.h>
+#include <src/ops.h>
 
 // tipo di operazione (usata internamente)
 typedef struct {

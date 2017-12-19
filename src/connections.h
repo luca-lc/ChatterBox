@@ -14,7 +14,11 @@
 #define UNIX_PATH_MAX  64
 #endif
 
-#include <./src/message.h>
+#include <src/message.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#define SOCKNAME     "./cs_sock"
 
 /**
  * @file  connection.h
