@@ -61,45 +61,17 @@ void mng_conn( int arg )
 	//int c_fd = (int)arg;
 	printf( "Connection management has been started...\n" );
 	message_t msg;
-	char buff[50];
-	char tmp[256];
-	while( true )
-	{
-		if ( readHeader( arg, &msg.hdr ) <= 0)
-		{
-			printf( "error\n" );
-			return;
-		}
-		else
-		{
-			printf( "Sender:\t%s\n", msg.hdr.sender );
-			printf( "OP:\t%d\n", msg.hdr.op );
-			sleep( 1 );
-		}
-		if( readData( arg, &msg.data ) <= 0 )
-		{
-			printf( "error\n" );
-			return;
-		}
-		else
-		{
-			printf( "Receiver:\t%s\n", msg.data.hdr.receiver );
-			printf( "Sender say:\t%s\n", msg.data.buf );
-			sleep( 1 );
-		}
-//		if( readMsg( arg, &msg ) <= 0 )
-//		{
-//			printf( "error\n" );
-//			return;
-//		}
-//		else
-//		{
-//			printf( "Sender say:\t%s\n", msg.data.buf );
-//			return;
-//		}
-		return;
+//	char buff[50];
+//	char tmp[256];
 
-	}
+	readHeader( arg, &msg.hdr );
+	readData( arg, &msg.data );
+
+	close(arg);
+//	recv( arg, buff, 50, 0 );
+	printf( "\nOP: %d\tSEN: %s\tRECV: %s\tLEN: %d\n", msg.hdr.op, msg.hdr.sender, msg.data.hdr.receiver, msg.data.hdr.len );
+	printf( "\n%s\n", msg.data.buf );
+	sleep( 3 );
 }
 
 

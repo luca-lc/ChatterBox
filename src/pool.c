@@ -84,11 +84,7 @@ void thread_work( threadpool_t *pool )
 
 	while( pool->count >= 0 )
 	{
-		pthread_mutex_lock( &(pool->lock_t) );
-		while( pool->count == 0 )
-		{
-			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
-		}
+
 //	TODO: stop execution
 //		if( pool->shutdown == 0)
 //		{
@@ -96,6 +92,12 @@ void thread_work( threadpool_t *pool )
 //			printf( "shutdown\n" );
 //			exit( EXIT_SUCCESS );
 //		}
+
+		pthread_mutex_lock( &(pool->lock_t) );
+		while( pool->count == 0 )
+		{
+			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
+		}
 
 		int min = +INFINITY, min_i = -1;
 		for( int i = 0; i < max_conn; i++ )
@@ -114,6 +116,8 @@ void thread_work( threadpool_t *pool )
 		pool->count -= 1;
 		pthread_cond_signal( &(pool->cond_t) );
 		pthread_mutex_unlock( &(pool->lock_t) );
+
+//		sleep( 1 );
 
 		( *(tasks.function) )( tasks.args );
 	}
@@ -207,6 +211,10 @@ int threadpool_add( threadpool_t *pool, void(*functions)(void *), void *arg )
 
 	if( pool->shutdown )
 	{
+		if( pthread_mutex_unlock( &(pool->lock_t) ) != 0 )
+		{
+			return -1;
+		}
 		return -1;
 	}
 

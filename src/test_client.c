@@ -41,37 +41,25 @@ int main(void)
 	}
 
     message_t msg;
+    char tmp[50] = "ciao\040 come\040 stai?";
     setHeader( &msg.hdr, GETFILE_OP, "luca" );
-    setData( &msg.data, "Roby", "ciao-mondo", 20 );
+    setData( &msg.data, "Roby", tmp, strlen(tmp) );
     if (sendRequest(c_fd, &msg) == -1)
     	return -1;
     else
     	printf( "header sent\n" );
-    sleep( 2 );
 
     if( sendData( c_fd, &msg.data ) == -1 )
     	return -1;
     else
     	printf( "msg sent\n" );
+//    send( c_fd, tmp, 50, 0 );
 
-    sleep( 1 );
 
-
-//	char buff[20];
-//	for( int i = 0; i < N-5; i++ )
-//	{
-//		sprintf( buff, "Hallo!\t%d", i );
-//		write(c_fd, buff, 20);
-//		sleep( 3 );
-//		memset(&buff[0], 0, sizeof(buff));
-//	}
-//	memset(&buff[0], 0, sizeof(buff));
-//	sprintf( buff, "close" );
-//	write(c_fd, buff, 20);
 
 	printf("Client %d ha inviato il messaggio\n", getpid());
 
-	sleep(1);
+
 	close( c_fd );
 
 	return 0;

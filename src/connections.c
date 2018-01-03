@@ -71,22 +71,52 @@ int openConnection(char* path, unsigned int ntimes, unsigned int secs)
  */
 int readHeader(long connfd, message_hdr_t *hdr)
 {
-	int r;
-	char *buffptr = (char *)hdr;
-	size_t left = sizeof(hdr);
+	char *buff = NULL;
+	char tmp_op[20];
+	int left, r;
+
+	//read operation
+	sprintf( tmp_op, "%d", hdr->op );
+	left = sizeof( hdr->op ), r = 0;
 	while( left > 0 )
 	{
-		if( (r = read( (int)connfd, buffptr, left)) == -1)
+		if( (r = recv( (int)connfd, tmp_op, left, 0)) == -1 )
 		{
 			if( errno == EINTR )
+			{
 				continue;
+			}
 			return -1;
 		}
 		if( r == 0 )
+		{
 			return 0;
+		}
 		left -= r;
 	}
-	return( sizeof(hdr) );
+
+
+	//read sender
+	left = sizeof( hdr->sender )-1, r = 0;
+	buff = (char *)hdr->sender;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)connfd, buff, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
+//	hdr->sender[sizeof( hdr->sender)] = '\0';
+	return( sizeof(hdr->op) + sizeof(hdr->sender) );
 }
 
 
@@ -96,23 +126,53 @@ int readHeader(long connfd, message_hdr_t *hdr)
  */
 int sendRequest(long fd, message_t *msg)
 {
-	size_t left = sizeof( msg->hdr );
-	int r;
-	char *buffptr = (char *)&msg->hdr;
-	while(left>0)
+	char *buff = NULL;
+	char tmp_op[20];
+	int left, r;
+
+	//send operation
+	sprintf( tmp_op, "%d", msg->hdr.op );
+	left = sizeof( msg->hdr.op ), r = 0;
+	while( left > 0 )
 	{
-		if( (r = write((int)fd, buffptr,left)) == -1 )
+		if( (r = send( (int)fd, tmp_op, left, 0)) == -1 )
 		{
 			if( errno == EINTR )
+			{
 				continue;
+			}
 			return -1;
 		}
 		if( r == 0 )
+		{
 			return 0;
+		}
 		left -= r;
 	}
 
-	return( sizeof( msg->hdr ) );
+
+	//send sender
+	left = sizeof( msg->hdr.sender )-1, r = 0;
+	buff = (char *)msg->hdr.sender;
+	while( left > 0 )
+	{
+		if( (r = send( (int)fd, buff, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
+//	msg->hdr.sender[sizeof( msg->hdr.sender)] = '\0';
+
+	return( sizeof(msg->hdr.op) + sizeof(msg->hdr.sender) );
 }
 
 
@@ -122,39 +182,75 @@ int sendRequest(long fd, message_t *msg)
  */
 int readData(long fd, message_data_t *data)
 {
-	int r;
-		char *buffptr = (char *)data;
-		size_t left = sizeof(data);
-		while( left > 0 )
+	char *buff = NULL;
+	char tmp_len[20];
+	int left, r;
+
+	//length reception
+	memset( &tmp_len[0], '0', sizeof( tmp_len ) );
+	left = sizeof( data->hdr.len ), r = 0;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)fd, tmp_len, left, 0)) == -1 )
 		{
-			if( (r = read( (int)fd, buffptr, left)) == -1)
+			if( errno == EINTR )
 			{
-				if( errno == EINTR )
-					continue;
-				return -1;
+				continue;
 			}
-			if( r == 0 )
-				return 0;
-			left -= r;
+			return -1;
 		}
-		return( sizeof(data) );
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
+	data->hdr.len = atoi( tmp_len );
 
-//	left = sizeof( data->buf );
-//	buffptr = (char *)&data->buf;
-//	while(left>0)
-//	{
-//		if( (r = read((int)fd, buffptr,left)) == -1 )
-//		{
-//			if( errno == EINTR )
-//				continue;
-//			return -1;
-//		}
-//		if( r == 0 )
-//			return 0;
-//		left -= r;
-//	}
+	//receiver reception
+	left = sizeof( data->hdr.receiver ), r = 0;
+	buff = (char *)data->hdr.receiver;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)fd, buff, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
 
-//	return( sizeof( data ) );
+
+	//receiver message body
+	data->buf = (char *)malloc( data->hdr.len+1 * sizeof( char ) );
+	left = data->hdr.len, r = 0;
+	buff = (char *)data->buf;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)fd, buff, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
+	data->buf[data->hdr.len] = '\0';
+
+	return( data->hdr.len + sizeof(data->hdr.receiver) + sizeof(data->buf) );
 }
 
 
@@ -189,24 +285,75 @@ int readMsg(long fd, message_t *msg)
 /**
  * @brief
  */
-int sendData(long fd, message_data_t *msg)
+int sendData( long fd, message_data_t *msg )
 {
-	size_t left = sizeof( msg->buf );
-	int r;
-	char *buffptr = (char *)&msg->buf;
-	while(left>0)
+	char *buff = NULL;
+	char tmp_len[20];
+	int left, r;
+
+	//send length
+	sprintf( tmp_len, "%d", msg->hdr.len );
+	left = sizeof( msg->hdr.len ), r = 0;
+	while( left > 0 )
 	{
-		if( (r = write((int)fd, buffptr,left)) == -1 )
+		if( (r = send( (int)fd, tmp_len, left, 0)) == -1 )
 		{
 			if( errno == EINTR )
+			{
 				continue;
+			}
 			return -1;
 		}
 		if( r == 0 )
+		{
 			return 0;
+		}
 		left -= r;
 	}
 
-	return( sizeof( msg ) );
-}
 
+	//send receiver
+	left = sizeof( msg->hdr.receiver ), r = 0;
+	buff = (char *)msg->hdr.receiver;
+	while( left > 0 )
+	{
+		if( (r = send( (int)fd, buff, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
+	msg->hdr.receiver[sizeof( msg->hdr.receiver)] = '\0';
+
+	//send message body
+	left = msg->hdr.len+1, r = 0;
+	buff = (char *)msg->buf;
+	while( left > 0 )
+	{
+		if( (r = send( (int)fd, buff, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
+	msg->buf[msg->hdr.len] = '\0';
+
+
+	return( msg->hdr.len + sizeof(msg->hdr.receiver) + sizeof(msg->buf) );
+}
