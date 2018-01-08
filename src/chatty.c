@@ -67,11 +67,12 @@ void mng_conn( int arg )
 	readHeader( arg, &msg.hdr );
 	readData( arg, &msg.data );
 
-	close(arg);
 //	recv( arg, buff, 50, 0 );
 	printf( "\nOP: %d\tSEN: %s\tRECV: %s\tLEN: %d\n", msg.hdr.op, msg.hdr.sender, msg.data.hdr.receiver, msg.data.hdr.len );
-	printf( "\n%s\n", msg.data.buf );
-	sleep( 3 );
+	printf( "\nbuff: %s\n", msg.data.buf );
+
+	close(arg);
+
 }
 
 

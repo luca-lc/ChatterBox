@@ -42,18 +42,16 @@ int main(void)
 
     message_t msg;
     char tmp[50] = "ciao\040 come\040 stai?";
-    setHeader( &msg.hdr, GETFILE_OP, "luca" );
-    setData( &msg.data, "Roby", tmp, strlen(tmp) );
+    setHeader( &msg.hdr, DELGROUP_OP, "lucone_1995" );
+    setData( &msg.data, "Roby", tmp, strlen(tmp)+1 );
     if (sendRequest(c_fd, &msg) == -1)
     	return -1;
     else
     	printf( "header sent\n" );
-
     if( sendData( c_fd, &msg.data ) == -1 )
     	return -1;
     else
     	printf( "msg sent\n" );
-//    send( c_fd, tmp, 50, 0 );
 
 
 

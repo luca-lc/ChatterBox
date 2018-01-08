@@ -71,34 +71,21 @@ int openConnection(char* path, unsigned int ntimes, unsigned int secs)
  */
 int readHeader(long connfd, message_hdr_t *hdr)
 {
-	char *buff = NULL;
-	char tmp_op[20];
-	int left, r;
+	size_t size_buf = sizeof(hdr->op) + sizeof(hdr->sender);
+	char *buff;
 
-	//read operation
-	sprintf( tmp_op, "%d", hdr->op );
-	left = sizeof( hdr->op ), r = 0;
-	while( left > 0 )
+	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
 	{
-		if( (r = recv( (int)connfd, tmp_op, left, 0)) == -1 )
-		{
-			if( errno == EINTR )
-			{
-				continue;
-			}
-			return -1;
-		}
-		if( r == 0 )
-		{
-			return 0;
-		}
-		left -= r;
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocate space" );
+		return EXIT_FAILURE;
 	}
 
 
-	//read sender
-	left = sizeof( hdr->sender )-1, r = 0;
-	buff = (char *)hdr->sender;
+	int left, r;
+
+	//receive buffer
+	left = size_buf, r = 0;
 	while( left > 0 )
 	{
 		if( (r = recv( (int)connfd, buff, left, 0)) == -1 )
@@ -115,8 +102,13 @@ int readHeader(long connfd, message_hdr_t *hdr)
 		}
 		left -= r;
 	}
-//	hdr->sender[sizeof( hdr->sender)] = '\0';
-	return( sizeof(hdr->op) + sizeof(hdr->sender) );
+
+	memcpy( &hdr->op, buff, sizeof( int ) );//copy op in hdr's field
+	memcpy( hdr->sender, buff+sizeof( int), sizeof( hdr->sender ) ); //copy sender in hdr's field
+
+	free( buff );
+
+	return( size_buf );
 }
 
 
@@ -126,34 +118,36 @@ int readHeader(long connfd, message_hdr_t *hdr)
  */
 int sendRequest(long fd, message_t *msg)
 {
-	char *buff = NULL;
-	char tmp_op[20];
+	size_t size_buf = sizeof(msg->hdr.op) + sizeof(msg->hdr.sender) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver) + msg->data.hdr.len + 1;
 	int left, r;
-
-	//send operation
-	sprintf( tmp_op, "%d", msg->hdr.op );
-	left = sizeof( msg->hdr.op ), r = 0;
-	while( left > 0 )
+	char *buff;
+	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
 	{
-		if( (r = send( (int)fd, tmp_op, left, 0)) == -1 )
-		{
-			if( errno == EINTR )
-			{
-				continue;
-			}
-			return -1;
-		}
-		if( r == 0 )
-		{
-			return 0;
-		}
-		left -= r;
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocate space" );
+		return EXIT_FAILURE;
 	}
 
+	int offset = 0;
+	memcpy( buff + offset, &msg->hdr.op, sizeof( int ) ); //copy op in buffer
 
-	//send sender
-	left = sizeof( msg->hdr.sender )-1, r = 0;
-	buff = (char *)msg->hdr.sender;
+	offset = sizeof( int );
+	memcpy( buff+offset, &msg->hdr.sender, sizeof( msg->hdr.sender ) ); //copy sender in buffer.
+
+	offset = sizeof( int ) + sizeof( msg->hdr.sender );
+	memcpy( buff+offset, &msg->data.hdr.len, sizeof(msg->data.hdr.len) ); //copy body len in buffer
+
+	offset = sizeof( int ) + sizeof( msg->hdr.sender ) + sizeof(msg->data.hdr.len);
+	memcpy( buff+offset, &msg->data.hdr.receiver, sizeof(msg->data.hdr.receiver) ); //copy receiver name in buffer
+
+	offset = sizeof( int ) + sizeof( msg->hdr.sender ) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver);
+	memcpy( buff+offset, &msg->data.buf, msg->data.hdr.len ); //copy body msg in buffer
+
+	buff[size_buf-1] = '\0';
+
+
+	//send buffer
+	left = size_buf, r = 0;
 	while( left > 0 )
 	{
 		if( (r = send( (int)fd, buff, left, 0)) == -1 )
@@ -170,9 +164,10 @@ int sendRequest(long fd, message_t *msg)
 		}
 		left -= r;
 	}
-//	msg->hdr.sender[sizeof( msg->hdr.sender)] = '\0';
 
-	return( sizeof(msg->hdr.op) + sizeof(msg->hdr.sender) );
+	free( buff );
+
+	return( size_buf + msg->data.hdr.len );
 }
 
 
@@ -182,34 +177,25 @@ int sendRequest(long fd, message_t *msg)
  */
 int readData(long fd, message_data_t *data)
 {
+	int byte_buf = 1024*1024;
+	size_t size_buf = sizeof(data->hdr.len) + sizeof(data->hdr.receiver) + 5;
 	char *buff = NULL;
-	char tmp_len[20];
-	int left, r;
-
-	//length reception
-	memset( &tmp_len[0], '0', sizeof( tmp_len ) );
-	left = sizeof( data->hdr.len ), r = 0;
-	while( left > 0 )
+	if( (buff = ( char * )malloc(size_buf * sizeof( char ))) == NULL )
 	{
-		if( (r = recv( (int)fd, tmp_len, left, 0)) == -1 )
-		{
-			if( errno == EINTR )
-			{
-				continue;
-			}
-			return -1;
-		}
-		if( r == 0 )
-		{
-			return 0;
-		}
-		left -= r;
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocate space" );
+		return EXIT_FAILURE;
 	}
-	data->hdr.len = atoi( tmp_len );
+	if ( (data->buf = ( char * )malloc( data->hdr.len * sizeof( char ) )) == NULL )
+	{
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocate space" );
+		return EXIT_FAILURE;
+	}
 
-	//receiver reception
-	left = sizeof( data->hdr.receiver ), r = 0;
-	buff = (char *)data->hdr.receiver;
+
+	//ricevo buffer
+	int left = size_buf, r = 0;
 	while( left > 0 )
 	{
 		if( (r = recv( (int)fd, buff, left, 0)) == -1 )
@@ -227,14 +213,15 @@ int readData(long fd, message_data_t *data)
 		left -= r;
 	}
 
+	//divido contenuti
+	memcpy( &data->hdr.len, buff, sizeof( int ) );
+    memcpy( data->hdr.receiver, buff+sizeof( unsigned int ), sizeof( data->hdr.receiver ) );
 
-	//receiver message body
-	data->buf = (char *)malloc( data->hdr.len+1 * sizeof( char ) );
+    //ricevo body
 	left = data->hdr.len, r = 0;
-	buff = (char *)data->buf;
 	while( left > 0 )
 	{
-		if( (r = recv( (int)fd, buff, left, 0)) == -1 )
+		if( (r = recv( (int)fd, data->buf, left, 0)) == -1 )
 		{
 			if( errno == EINTR )
 			{
@@ -248,9 +235,9 @@ int readData(long fd, message_data_t *data)
 		}
 		left -= r;
 	}
-	data->buf[data->hdr.len] = '\0';
 
-	return( data->hdr.len + sizeof(data->hdr.receiver) + sizeof(data->buf) );
+	free( buff );
+	return( size_buf + data->hdr.len );
 }
 
 
@@ -260,23 +247,73 @@ int readData(long fd, message_data_t *data)
  */
 int readMsg(long fd, message_t *msg)
 {
-//	size_t left = sizeof( msg->data.buf );
-//	int r;
-//	char *buffptr = (char *)&msg->data.buf;
-//	while(left>0)
-//	{
-//		if( (r = read((int)fd, buffptr,left)) == -1 )
-//		{
-//			if( errno == EINTR )
-//				continue;
-//			return -1;
-//		}
-//		if( r == 0 )
-//			return 0;
-//		left -= r;
-//	}
-//
-//	return( sizeof( msg->data.buf ) );
+	int left = 0, r = 0;
+	size_t size_buf = sizeof(msg->hdr.op) + sizeof(msg->hdr.sender) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver) + 1;
+	char *buff = NULL;
+	if( (buff = ( char * )malloc(size_buf * sizeof( char ))) == NULL )
+	{
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocate space" );
+		return EXIT_FAILURE;
+	}
+
+	//ricevo buffer
+	left = size_buf, r = 0;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)fd, buff, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
+
+	int offset = 0;
+	memcpy( &msg->hdr.op, buff + offset, sizeof( int ) ); //copy op in buffer
+
+	offset = sizeof( int );
+	memcpy( &msg->hdr.sender, buff+offset, sizeof( msg->hdr.sender ) ); //copy sender in buffer.
+
+	offset = sizeof( int ) + sizeof( msg->hdr.sender );
+	memcpy( &msg->data.hdr.len, buff+offset, sizeof(msg->data.hdr.len) ); //copy body len in buffer
+
+	offset = sizeof( int ) + sizeof( msg->hdr.sender ) + sizeof(msg->data.hdr.len);
+	memcpy( &msg->data.hdr.receiver, buff+offset, sizeof(msg->data.hdr.receiver) ); //copy receiver name in buffer
+
+	free( buff );
+
+
+	//ricevo body
+
+	left = msg->data.hdr.len, r = 0;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)fd, msg->data.buf, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		left -= r;
+	}
+
+
+
+
 	return 0;
 }
 
@@ -287,34 +324,21 @@ int readMsg(long fd, message_t *msg)
  */
 int sendData( long fd, message_data_t *msg )
 {
+	size_t size_buf = sizeof(msg->hdr.len) + sizeof(msg->hdr.receiver) + 5;
 	char *buff = NULL;
-	char tmp_len[20];
-	int left, r;
-
-	//send length
-	sprintf( tmp_len, "%d", msg->hdr.len );
-	left = sizeof( msg->hdr.len ), r = 0;
-	while( left > 0 )
+	if( (buff = ( char * )malloc(size_buf * sizeof( char ))) == NULL )
 	{
-		if( (r = send( (int)fd, tmp_len, left, 0)) == -1 )
-		{
-			if( errno == EINTR )
-			{
-				continue;
-			}
-			return -1;
-		}
-		if( r == 0 )
-		{
-			return 0;
-		}
-		left -= r;
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocate space" );
+		return EXIT_FAILURE;
 	}
 
+	//copio elementi nel buffer
+	memcpy( buff, (char *)&msg->hdr.len, sizeof( int ) );
+	memcpy( buff+sizeof( unsigned int ), msg->hdr.receiver, size_buf - sizeof( unsigned int ) );
 
-	//send receiver
-	left = sizeof( msg->hdr.receiver ), r = 0;
-	buff = (char *)msg->hdr.receiver;
+	//invio buffer
+	int left = size_buf, r = 0;
 	while( left > 0 )
 	{
 		if( (r = send( (int)fd, buff, left, 0)) == -1 )
@@ -331,14 +355,13 @@ int sendData( long fd, message_data_t *msg )
 		}
 		left -= r;
 	}
-	msg->hdr.receiver[sizeof( msg->hdr.receiver)] = '\0';
 
-	//send message body
-	left = msg->hdr.len+1, r = 0;
-	buff = (char *)msg->buf;
+	sleep( 0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 );
+	left = msg->hdr.len, r = 0;
+
 	while( left > 0 )
 	{
-		if( (r = send( (int)fd, buff, left, 0)) == -1 )
+		if( (r = send( (int)fd, msg->buf, left, 0)) == -1 )
 		{
 			if( errno == EINTR )
 			{
@@ -352,8 +375,7 @@ int sendData( long fd, message_data_t *msg )
 		}
 		left -= r;
 	}
-	msg->buf[msg->hdr.len] = '\0';
 
-
-	return( msg->hdr.len + sizeof(msg->hdr.receiver) + sizeof(msg->buf) );
+	free( buff );
+	return( size_buf + msg->hdr.len );
 }

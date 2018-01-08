@@ -57,22 +57,24 @@ TARGETS		= $(BIN_DIR)/chatty        \
 OBJECTS		= 	*.o
 
 # aggiungere qui gli altri include
-HEADER_FILES   = $(SOURCE_DIR)/connections.h \
-		 	$(SOURCE_DIR)/message.h     \
-		  $(SOURCE_DIR)/ops.h	  	\
-		  $(SOURCE_DIR)/stats.h       \
-		  $(SOURCE_DIR)/config.h		\
-		  $(SOURCE_DIR)/queue.h		\
-		  $(SOURCE_DIR)/pool.h 		\
-		  $(SOURCE_DIR)/hashtable.h	\
-		  $(SOURCE_DIR)/signup.h
+HEADER_FILES   =	$(SOURCE_DIR)/ops.h	  		\
+		  			$(SOURCE_DIR)/stats.h       \
+					$(SOURCE_DIR)/message.h     \
+					$(SOURCE_DIR)/connections.h \
+				  	$(SOURCE_DIR)/queue.h		\
+				  	$(SOURCE_DIR)/pool.h 		\
+				  	$(SOURCE_DIR)/hashtable.h	\
+				  	$(SOURCE_DIR)/signup.h		\
+				  	$(SOURCE_DIR)/config.h		
 
 
-SOURCE_FILES	= 	$(SOURCE_DIR)/queue.c \
-					$(SOURCE_DIR)/pool.c	\
-					$(SOURCE_DIR)/hashtable.c \
-					$(SOURCE_DIR)/signup.c	\
-					$(SOURCE_DIR)/connections.c
+SOURCE_FILES	= 	$(SOURCE_DIR)/connections.c 	\
+					$(SOURCE_DIR)/queue.c 			\
+					$(SOURCE_DIR)/pool.c			\
+					$(SOURCE_DIR)/hashtable.c 		\
+					$(SOURCE_DIR)/signup.c			\
+				  	$(SOURCE_DIR)/config.c		
+					
 
 
 .PHONY: all clean cleanall test1 test2 test3 test4 test5 consegna
@@ -95,7 +97,7 @@ all		: $(TARGETS)
 
 
 $(BIN_DIR)/chatty: $(BIN_DIR)/chatty.o $(LIB_DIR)/libchatty.a $(HEADER_FILES) $(SOURCE_FILES)
-	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) -lm
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) -lm						#math.h needs -lm option
 
 $(BIN_DIR)/client: $(BIN_DIR)/client.o $(SOURCE_DIR)/message.h $(HEADER_FILES) $(SOURCE_FILES) #$(BIN_DIR)/connections.o
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
