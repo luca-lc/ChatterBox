@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 char *trim (char * s)
 {
@@ -43,7 +44,7 @@ char *trim (char * s)
 }
 
 
-struct s_conf pars( char *name, struct s_conf *s )
+void pars( char *name, struct s_conf *s )
 {
     FILE *f;
     if( (f=fopen( name, "r" )) == NULL )
@@ -126,6 +127,4 @@ struct s_conf pars( char *name, struct s_conf *s )
 
         str = NULL;
     }
-
-    return *s;
 }

@@ -68,7 +68,7 @@ pthread_mutex_t hash_lock = PTHREAD_MUTEX_INITIALIZER;	///< declaration of mutex
  */
 int hashVal( int key )
 {
-	return ( key % max_conn );
+	return ( key % _MAX_CONN );
 }
 
 

@@ -18,7 +18,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#define SOCKNAME     "./cs_sock"
+
+extern char SOCKNAME[UNIX_PATH_MAX];
+extern int _FILESIZE, _MSGSIZE;
 
 /**
  * @file  connection.h

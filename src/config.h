@@ -40,6 +40,9 @@ struct s_conf
 };
 
 
+void pars( char *name, struct s_conf *s );
+
+
 // to avoid warnings like "ISO C forbids an empty translation unit"
 typedef int make_iso_compilers_happy;
 

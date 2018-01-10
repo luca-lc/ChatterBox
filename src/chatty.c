@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <src/connections.h>
 #include <src/hashtable.h>
+#include <src/config.h>
 #include "src/chatty.h"
 
 /* inserire gli altri include che servono */
@@ -44,6 +45,8 @@
  */
 struct statistics  chattyStats = { 0,0,0,0,0,0,0 }; //#registered user,#client online,#delivered mes,#to be delivered message,#delivered files, #to be delivered files, #errors messages
 
+
+
 /**
  * TODO
  */
@@ -55,19 +58,57 @@ static void usage(const char *progname)
 
 
 
+/**
+ *
+ */
+void print_statistic( FILE *stat )
+{
+	int r = 0;
+	while( true && r == 0 )
+	{
+		r = printStats( stat );
+		sleep( 30 );
+	}
+}
 
+
+
+/**
+ *
+ */
+void initServer( struct s_conf *config )
+{
+	//set socket path
+	strcpy( SOCKNAME, config->UnixPath );
+
+	//set maximum number of connection
+	_MAX_CONN = config->MaxConnections;
+	//set number of thread in pool
+	_THREADn = config->ThreadsInPool;
+
+	//set the max size of file that can be sent
+	_FILESIZE = config->MaxFileSize;
+
+	//set the max size of message that can be sent
+	_MSGSIZE = config->MaxMsgSize;
+}
+
+
+
+/**
+ *
+ */
 void mng_conn( int arg )
 {
 	//int c_fd = (int)arg;
 	printf( "Connection management has been started...\n" );
 	message_t msg;
-//	char buff[50];
-//	char tmp[256];
 
 	readHeader( arg, &msg.hdr );
+//
 	readData( arg, &msg.data );
 
-//	recv( arg, buff, 50, 0 );
+//	readMsg( arg, &msg );
 	printf( "\nOP: %d\tSEN: %s\tRECV: %s\tLEN: %d\n", msg.hdr.op, msg.hdr.sender, msg.data.hdr.receiver, msg.data.hdr.len );
 	printf( "\nbuff: %s\n", msg.data.buf );
 
@@ -85,8 +126,8 @@ int main(int argc, char *argv[])
 {
     /** VARIABLES **/
     FILE *stats;
-
-
+    struct s_conf myconf;
+    int stat_o_time = 5;
 
     //gestione esecuzione server
     if (argc == 1)
@@ -94,7 +135,6 @@ int main(int argc, char *argv[])
         usage( argv[0] );
         return -1;
     }
-
     char opt;
     while( (opt = getopt( argc, argv, "f" )) != -1 )
     {
@@ -102,23 +142,38 @@ int main(int argc, char *argv[])
         {
             case 'f' :
             {
-                if( (stats=fopen( "./.statschat.log", "a+" )) == NULL )
-                {
-                    fprintf( stderr, "problem to create or open stats file" );//TODO: check
-                }
-                else
-                {
-                    printStats( stats ); //TODO: clean "statschat.log"
-                }
+            	pars( argv[2], &myconf );
             }
                 break;
 
-            default: ;
+            default:
+            {
+            	usage( argv[0] );
+            };
         }
     }
 
+    //start thread to print statics
+    while( (stats = fopen( myconf.StatFileName, "a" )) == NULL && stat_o_time > 0 )
+    {
+    	perror( "fopen()" );
+    	fprintf( stderr, "Problem to open the file %s\n", myconf.StatFileName );
+    	fprintf( stderr, "Try again %d times",  stat_o_time );
+    	stat_o_time --;
+    }
+    if( stat_o_time == 0 )
+    {
+    	fprintf( stderr, "Unable to open the file %s\n", myconf.StatFileName );
+    }
+    pthread_t stat_printer;
+    pthread_create( &stat_printer, NULL, (void *)print_statistic, (void *)stats );
 
-//TEST
+
+    initServer( &myconf );
+
+
+
+    //TEST
 
     unlink(SOCKNAME);
 
@@ -132,7 +187,7 @@ int main(int argc, char *argv[])
 
     s_fd = socket( AF_UNIX, SOCK_STREAM, 0 );
     bind( s_fd, (struct sockaddr *)&se, sizeof(se) );
-    listen( s_fd, max_conn );
+    listen( s_fd, _MAX_CONN );
 
     while( true )
     {
@@ -148,7 +203,5 @@ int main(int argc, char *argv[])
     	}
     }
 
-
-    //fprintf( stdout, "\nOK FATTO\n" );
 	return 0;
 }

@@ -1,0 +1,28 @@
+# -------------------------------------------------------------- 
+#
+# File di configurazione del server chatterbox
+#
+# --------------------------------------------------------------
+# path utilizzato per la creazione del socket AF_UNIX
+UnixPath         = /home/luca/eclipse-workspace/ChatterBox/tmp/chatty_socket
+
+# numero massimo di connessioni pendenti
+MaxConnections	 = 32
+
+# numero di thread nel pool 
+ThreadsInPool    = 8
+
+# dimensione massima di un messaggio testuale (numero di caratteri)
+MaxMsgSize       = 512
+
+# dimensione massima di un file accettato dal server (kilobytes)
+MaxFileSize      = 1024
+
+# numero massimo di messaggi che il server 'ricorda' per ogni client
+MaxHistMsgs      = 16
+
+# directory dove memorizzare i files da inviare agli utenti 
+DirName          = /home/luca/eclipse-workspace/ChatterBox/tmp/chatty 
+
+# file nel quale verranno scritte le statistiche del server
+StatFileName     = /home/luca/eclipse-workspace/ChatterBox/tmp/chatty_stats.txt

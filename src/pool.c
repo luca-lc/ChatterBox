@@ -59,6 +59,12 @@
 #include <src/signup.h>
 
 
+int _MAX_CONN, _THREADn;	///< max_conn is number of max connection to handle
+							///< num_thread is number of thread that operates in threadpool_t
+
+
+
+
 
 /******************************************************************************
 							MUTEX & CONDITION VARIABLES
@@ -70,10 +76,6 @@ pthread_mutex_t lock_pool = PTHREAD_MUTEX_INITIALIZER;
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
-int max_conn = 6, num_thread = 4; //TODO: check variables
-
-
-
 /**
  * @brief		function to extract from queue the first task added and run it
  * @var	pool	pointer to thread pool to can extract the task and its args
@@ -100,7 +102,7 @@ void thread_work( threadpool_t *pool )
 		}
 
 		int min = +INFINITY, min_i = -1;
-		for( int i = 0; i < max_conn; i++ )
+		for( int i = 0; i < _MAX_CONN; i++ )
 		{
 			if( pool->task[i].next < min && pool->task[i].function != NULL )
 			{
@@ -140,22 +142,22 @@ threadpool_t *pool_creation( )
 
 	// INITIALIZATION
 	pool->thread_crt = 0;
-	pool->queue_size = max_conn; ///< external variable
+	pool->queue_size = _MAX_CONN; ///< external variable
 	pool->count = 0;
 
 
-	if( (pool->thread = ( pthread_t * )malloc( num_thread * sizeof( pthread_t ) ) ) == NULL )
+	if( (pool->thread = ( pthread_t * )malloc( _THREADn * sizeof( pthread_t ) ) ) == NULL )
 	{
 		fprintf( stderr, "Problem to allocate space for thread" );
 		exit( EXIT_FAILURE );
 	}
 
-	if( (pool->task = ( thread_task_t * )malloc( max_conn * sizeof( thread_task_t ) )) == NULL )
+	if( (pool->task = ( thread_task_t * )malloc( _MAX_CONN * sizeof( thread_task_t ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to allocate space for queuetask" );
 		exit( EXIT_FAILURE );
 	}
-	for( int i = 0; i < max_conn; i++ )
+	for( int i = 0; i < _MAX_CONN; i++ )
 	{
 		pool->task[i].function = NULL;
 		pool->task[i].args = NULL;
@@ -168,7 +170,7 @@ threadpool_t *pool_creation( )
 	pool->cond_t = ( pthread_cond_t )PTHREAD_COND_INITIALIZER;
 
 
-	for( int i = 0; i < num_thread; i++ )
+	for( int i = 0; i < _THREADn; i++ )
 	{
 		if( pthread_create( &(pool->thread[i]), NULL, thread_work, pool ) != 0 )
 		{
@@ -218,7 +220,7 @@ int threadpool_add( threadpool_t *pool, void(*functions)(void *), void *arg )
 		return -1;
 	}
 
-	while( pool->count ==  max_conn )
+	while( pool->count ==  _MAX_CONN )
 	{
 		fprintf( stderr, "\n\nWAIT: QUEUE IS FULL\n\n" ); //TODO: check wait condition and error message
 		pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );

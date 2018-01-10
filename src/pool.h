@@ -26,13 +26,14 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <assert.h>
+#include <src/config.h>
 
 
 
 /******************************************************************************
 								TYPE & STRUCTURES
 ******************************************************************************/
-extern int max_conn, num_thread;	///< max_conn is number of max connection to handle
+extern int _MAX_CONN, _THREADn;	///< max_conn is number of max connection to handle
 									///< num_thread is number of thread that operates in threadpool_t
 
 
