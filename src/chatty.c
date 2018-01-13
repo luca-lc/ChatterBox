@@ -87,10 +87,12 @@ void initServer( struct s_conf *config )
 	_THREADn = config->ThreadsInPool;
 
 	//set the max size of file that can be sent
-	_FILESIZE = config->MaxFileSize;
+	_FILESIZE = config->MaxFileSize * 1024;
 
 	//set the max size of message that can be sent
 	_MSGSIZE = config->MaxMsgSize;
+
+	strcpy( Dir, config->DirName );
 }
 
 
@@ -100,19 +102,52 @@ void initServer( struct s_conf *config )
  */
 void mng_conn( int arg )
 {
-	//int c_fd = (int)arg;
-	printf( "Connection management has been started...\n" );
+	int c_fd = (int)arg;
+	printf( "Connection management has been started\n" );
+	printf( "--------------------------------------\n\n" );
 	message_t msg;
+	msg.data.hdr.len = 0;
+	if( readMsg( arg, &msg ) <= 0 )
+	{
+		fprintf( stderr, "problem to receive" );
+	}
 
-	readHeader( arg, &msg.hdr );
-//
-	readData( arg, &msg.data );
+	int end = strlen(msg.data.buf);
+	while( msg.data.buf[end] != '/' )
+		end--;
+	end++;
+	char tmp_F[256];
+	strcpy( tmp_F, Dir );
+	strcat( tmp_F, msg.data.buf+end );
+	printf( "> %s\n\n\n", tmp_F );
 
-//	readMsg( arg, &msg );
-	printf( "\nOP: %d\tSEN: %s\tRECV: %s\tLEN: %d\n", msg.hdr.op, msg.hdr.sender, msg.data.hdr.receiver, msg.data.hdr.len );
-	printf( "\nbuff: %s\n", msg.data.buf );
+	FILE* ffd;
+	int i = 1;
+	if( msg.hdr.op == POSTFILE_OP )
+	{
+		ffd = fopen( tmp_F,  "w+" );
+		if( ffd == NULL )
+		{
+			printf( "FILE NON APERTO\n" );
+		}
+	}
 
+	message_data_t data;
+	readData( arg, &data );
+
+	fwrite( data.buf, sizeof( char ), data.hdr.len, ffd );
+
+
+
+
+
+	fclose(ffd);
 	close(arg);
+
+	printf( "OP:\n > %d\nSENDR:\n > %s\n", msg.hdr.op, msg.hdr.sender );
+	printf( "LEN:\n > %d\nRECR:\n > %s\n", msg.data.hdr.len, msg.data.hdr.receiver );
+	printf( "BODY:\n > %s\n", msg.data.buf );
+	printf( "######################################\n\n" );
 
 }
 
@@ -154,19 +189,19 @@ int main(int argc, char *argv[])
     }
 
     //start thread to print statics
-    while( (stats = fopen( myconf.StatFileName, "a" )) == NULL && stat_o_time > 0 )
-    {
-    	perror( "fopen()" );
-    	fprintf( stderr, "Problem to open the file %s\n", myconf.StatFileName );
-    	fprintf( stderr, "Try again %d times",  stat_o_time );
-    	stat_o_time --;
-    }
-    if( stat_o_time == 0 )
-    {
-    	fprintf( stderr, "Unable to open the file %s\n", myconf.StatFileName );
-    }
-    pthread_t stat_printer;
-    pthread_create( &stat_printer, NULL, (void *)print_statistic, (void *)stats );
+//    while( (stats = fopen( myconf.StatFileName, "a+" )) == NULL && stat_o_time > 0 )
+//    {
+//    	perror( "fopen()" );
+//    	fprintf( stderr, "%s\n\n", myconf.StatFileName );
+//    	fprintf( stderr, "Try again %d times\n",  stat_o_time );
+//    	stat_o_time --;
+//    }
+//    if( stat_o_time == 0 )
+//    {
+//    	fprintf( stderr, "Unable to open the file %s\n", myconf.StatFileName );
+//    }
+//    pthread_t stat_printer;
+//    pthread_create( &stat_printer, NULL, (void *)print_statistic, (void *)stats );
 
 
     initServer( &myconf );

@@ -86,15 +86,6 @@ void thread_work( threadpool_t *pool )
 
 	while( pool->count >= 0 )
 	{
-
-//	TODO: stop execution
-//		if( pool->shutdown == 0)
-//		{
-//			pthread_mutex_unlock( &(pool->lock_t) );
-//			printf( "shutdown\n" );
-//			exit( EXIT_SUCCESS );
-//		}
-
 		pthread_mutex_lock( &(pool->lock_t) );
 		while( pool->count == 0 )
 		{
@@ -119,7 +110,6 @@ void thread_work( threadpool_t *pool )
 		pthread_cond_signal( &(pool->cond_t) );
 		pthread_mutex_unlock( &(pool->lock_t) );
 
-//		sleep( 1 );
 
 		( *(tasks.function) )( tasks.args );
 	}
@@ -178,6 +168,8 @@ threadpool_t *pool_creation( )
 			fprintf( stderr, "Problem to create thread" );
 			exit( EXIT_FAILURE );
 		}
+        pthread_detach(pool->thread[i]);
+
 		pool->thread_crt += 1;
 	}
 

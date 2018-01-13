@@ -20,6 +20,7 @@
 #include <sys/un.h>
 
 extern char SOCKNAME[UNIX_PATH_MAX];
+extern char Dir[256];
 extern int _FILESIZE, _MSGSIZE;
 
 /**

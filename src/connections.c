@@ -26,9 +26,11 @@
 #include <ctype.h>
 #include <errno.h>
 #include <src/connections.h>
+#include <src/ops.h>
 
 int _FILESIZE, _MSGSIZE;
 char SOCKNAME[UNIX_PATH_MAX];
+char Dir[256];
 
 /******************************************************************************
 									FUNTIONS
@@ -84,13 +86,12 @@ int readHeader(long connfd, message_hdr_t *hdr)
 	}
 
 
-	int left, r;
+	int left = size_buf, r = 0, s = 0;
 
 	//receive the buffer
-	left = size_buf, r = 0;
 	while( left > 0 )
 	{
-		if( (r = recv( (int)connfd, buff, left, 0)) == -1 )
+		if( (r = recv( (int)connfd, buff+s, left, 0)) == -1 )
 		{
 			if( errno == EINTR )
 			{
@@ -102,18 +103,20 @@ int readHeader(long connfd, message_hdr_t *hdr)
 		{
 			return 0;
 		}
+		s += r;
 		left -= r;
 	}
 
 
 	//divide the buffer contents
 	int offset = 0;
-	memcpy( &hdr->op, buff + offset, sizeof( int ) ); //copy op in hdr's field
-	offset += sizeof( int );
+	memcpy( &hdr->op, buff + offset, sizeof( hdr->op ) ); //copy op in hdr's field
+
+	offset += sizeof( hdr->op );
 	memcpy( hdr->sender, buff + offset, sizeof( hdr->sender ) ); //copy sender in hdr's field
 
-	free( buff );
 
+	free( buff );
 	return( size_buf );
 }
 
@@ -124,9 +127,11 @@ int readHeader(long connfd, message_hdr_t *hdr)
  */
 int sendRequest(long fd, message_t *msg)
 {
-	size_t size_buf = sizeof(msg->hdr.op) + sizeof(msg->hdr.sender) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver) + msg->data.hdr.len + 1;
-	int left, r;
+	size_t size_buf = sizeof(msg->hdr.op) + sizeof( msg->hdr.sender) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver) + msg->data.hdr.len;
+	int left, r, s;
 	char *buff;
+
+
 	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
 	{
 		perror( "malloc()" );
@@ -136,45 +141,135 @@ int sendRequest(long fd, message_t *msg)
 
 	//copy message elements in the buffer
 	int offset = 0;
-	memcpy( buff + offset, &msg->hdr.op, sizeof( int ) ); //copy op in buffer
+	memcpy( buff+offset, &msg->hdr.op, sizeof( int ) ); //copy op in buffer
 
 	offset += sizeof( int );
-	memcpy( buff+offset, &msg->hdr.sender, sizeof( msg->hdr.sender ) ); //copy sender in buffer.
+	memcpy( buff+offset, msg->hdr.sender, sizeof( msg->hdr.sender ) ); //copy sender in buffer.
 
 	offset += sizeof( msg->hdr.sender );
 	memcpy( buff+offset, &msg->data.hdr.len, sizeof(msg->data.hdr.len) ); //copy body len in buffer
 
 	offset += sizeof(msg->data.hdr.len);
-	memcpy( buff+offset, &msg->data.hdr.receiver, sizeof(msg->data.hdr.receiver) ); //copy receiver name in buffer
+	memcpy( buff+offset, msg->data.hdr.receiver, sizeof(msg->data.hdr.receiver) ); //copy receiver name in buffer
 
 	offset += sizeof(msg->data.hdr.receiver);
-	memcpy( buff+offset, &msg->data.buf, msg->data.hdr.len ); //copy body msg in buffer
-
-	buff[size_buf-1] = '\0';
+	memcpy( buff+offset, msg->data.buf, msg->data.hdr.len ); //copy body msg in buffer
 
 
-	//send buffer
-	left = size_buf, r = 0;
-	while( left > 0 )
+	switch( msg->hdr.op )
 	{
-		if( (r = send( (int)fd, buff, left, 0)) == -1 )
+		//send only header
+		case REGISTER_OP		:
+		case CONNECT_OP			:
+		case GETPREVMSGS_OP		:
+		case USRLIST_OP			:
+		case UNREGISTER_OP		:
+		case DISCONNECT_OP		:
+		case OP_OK				:
+		case OP_FAIL			:
+		case OP_NICK_ALREADY	:
+		case OP_NICK_UNKNOWN	:
+		case OP_MSG_TOOLONG		:
+		case OP_END				:
+		case OP_NO_SUCH_FILE	:
 		{
-			if( errno == EINTR )
+			left = sizeof(msg->hdr.op) + sizeof( msg->hdr.sender), r = 0, s = 0;
+			while( left > 0 )
 			{
-				continue;
+				if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
+				{
+					if( errno == EINTR )
+					{
+						continue;
+					}
+					return -1;
+				}
+				if( r == 0 )
+				{
+					return 0;
+				}
+				s += r;
+				left -= r;
 			}
-			return -1;
-		}
-		if( r == 0 )
-		{
-			return 0;
-		}
-		left -= r;
+		}break;
+		//send all message
+		case POSTTXT_OP			:
+		case POSTTXTALL_OP		:
+		case POSTFILE_OP		:
+		case GETFILE_OP			:
+		case CREATEGROUP_OP		:
+		case ADDGROUP_OP		:
+		case DELGROUP_OP		:
+		case TXT_MESSAGE		:
+		case FILE_MESSAGE		:
+			{
+				//send header
+				left =  sizeof(msg->hdr.op) + sizeof( msg->hdr.sender), r = 0, s = 0;
+				while( left > 0 )
+				{
+					if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
+					{
+						if( errno == EINTR )
+						{
+							continue;
+						}
+						return -1;
+					}
+					if( r == 0 )
+					{
+						return 0;
+					}
+					s += r;
+					left -= r;
+				}
+
+				//send body header
+				left =  sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver), r = 0;
+				while( left > 0 )
+				{
+					if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
+					{
+						if( errno == EINTR )
+						{
+							continue;
+						}
+						return -1;
+					}
+					if( r == 0 )
+					{
+						return 0;
+					}
+					s += r;
+					left -= r;
+				}
+
+				//send body
+				left =  msg->data.hdr.len, r = 0;
+				while( left > 0 )
+				{
+					if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
+					{
+						if( errno == EINTR )
+						{
+							continue;
+						}
+						return -1;
+					}
+					if( r == 0 )
+					{
+						return 0;
+					}
+					s += r;
+					left -= r;
+				}
+
+			}break;
 	}
 
 
-	free( buff );
 
+
+	free( buff );
 	return( size_buf );
 }
 
@@ -185,9 +280,9 @@ int sendRequest(long fd, message_t *msg)
  */
 int readData(long fd, message_data_t *data)
 {
-	size_t size_buf = sizeof(data->hdr.len) + sizeof(data->hdr.receiver) + _FILESIZE + 1;
-	printf( "%d\n", size_buf );
+	size_t size_buf = sizeof(data->hdr.len) + sizeof(data->hdr.receiver);
 	char *buff = NULL;
+
 	if( (buff = ( char * )malloc(size_buf * sizeof( char ))) == NULL )
 	{
 		perror( "malloc()" );
@@ -196,9 +291,8 @@ int readData(long fd, message_data_t *data)
 	}
 
 
-
 	//receive the buffer
-	int left = size_buf, r = 0;
+	int left = size_buf, r = 0, s = 0;
 	while( left > 0 )
 	{
 		if( (r = recv( (int)fd, buff, left, 0)) == -1 )
@@ -213,52 +307,24 @@ int readData(long fd, message_data_t *data)
 		{
 			break;
 		}
+		s += r;
 		left -= r;
 	}
-
 	//divide the buffer contents
 	int offset = 0;
 	memcpy( &data->hdr.len, buff + offset, sizeof( data->hdr.len ) );
-	offset += sizeof( data->hdr.len );
+	offset += sizeof( int );
     memcpy( data->hdr.receiver, buff + offset, sizeof( data->hdr.receiver ) );
-    offset += sizeof( data->hdr.receiver );
-
-
-	if ( (data->buf = ( char * )malloc( data->hdr.len * sizeof( char ) )) == NULL )
-	{
-		perror( "malloc()" );
-		fprintf( stderr, "Problem to allocating space for message body" );
-		return EXIT_FAILURE;
-	}
-
-	memcpy( data->buf, buff + offset, data->hdr.len );
-
-	free( buff );
-	return( size_buf );
-}
 
 
 
-/**
- * @brief
- */
-int readMsg(long fd, message_t *msg)
-{
-	int left = 0, r = 0;
-	size_t size_buf = sizeof(msg->hdr.op) + sizeof(msg->hdr.sender) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver) + _FILESIZE + 1;
-	char *buff = NULL;
-	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
-	{
-		perror( "malloc()" );
-		fprintf( stderr, "Problem to allocating space for buffer" );
-		return EXIT_FAILURE;
-	}
+	char *tmp_body = (char *)malloc( data->hdr.len * sizeof(char) );
+	left = data->hdr.len, r = 0, s = 0;
 
-	//receive the buffer
-	left = size_buf, r = 0;
+	//receive body
 	while( left > 0 )
 	{
-		if( (r = recv( (int)fd, buff, left, 0)) == -1 )
+		if( (r = recv( (int)fd, tmp_body+s, left, 0)) == -1 )
 		{
 			if( errno == EINTR )
 			{
@@ -268,39 +334,28 @@ int readMsg(long fd, message_t *msg)
 		}
 		if( r == 0 )
 		{
-			return 0;
+			break;
 		}
+		s += r;
 		left -= r;
 	}
 
-	int offset = 0;
-	memcpy( &msg->hdr.op, buff + offset, sizeof( int ) ); //copy op
 
-	offset += sizeof( int );
-	memcpy( msg->hdr.sender, buff+offset, sizeof( msg->hdr.sender ) ); //copy sender
-
-	offset += sizeof( msg->hdr.sender );
-	memcpy( &msg->data.hdr.len, buff+offset, sizeof( msg->data.hdr.len ) ); //copy body len
-
-	offset += sizeof( msg->data.hdr.len );
-	memcpy( msg->data.hdr.receiver, buff+offset, sizeof( msg->data.hdr.receiver ) ); //copy receiver name
-
-	//space allocation for the message body
-	if( (msg->data.buf = ( char * )malloc( msg->data.hdr.len * sizeof( char ) )) == NULL )
+    if ( (data->buf = ( char * )malloc( data->hdr.len * sizeof( char ) )) == NULL )
 	{
 		perror( "malloc()" );
 		fprintf( stderr, "Problem to allocating space for message body" );
 		return EXIT_FAILURE;
 	}
 
-	offset += sizeof( msg->data.hdr.receiver );
-	memcpy( msg->data.buf, buff + offset, msg->data.hdr.len ); //copy message body
+	memcpy( data->buf, tmp_body, data->hdr.len );
 
 
 	free( buff );
-
-	return 0;
+	free( tmp_body );
+	return( size_buf + data->hdr.len );
 }
+
 
 
 
@@ -309,7 +364,7 @@ int readMsg(long fd, message_t *msg)
  */
 int sendData( long fd, message_data_t *msg )
 {
-	size_t size_buf = sizeof(msg->hdr.len) + sizeof(msg->hdr.receiver) + msg->hdr.len + 1;
+	size_t size_buf = sizeof(msg->hdr.len) + sizeof(msg->hdr.receiver);
 	char *buff = NULL;
 	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
 	{
@@ -323,16 +378,35 @@ int sendData( long fd, message_data_t *msg )
 	memcpy( buff + offset, &msg->hdr.len, sizeof( msg->hdr.len ) ); //copy body len
 	offset += sizeof( msg->hdr.len );
 	memcpy( buff + offset, msg->hdr.receiver, sizeof( msg->hdr.receiver ) ); //copy receiver
-	offset += sizeof( msg->hdr.receiver );
-	memcpy( buff + offset, msg->buf, msg->hdr.len );
-
-	printf( "%s\n", buff+offset );
 
 	//send buffer
-	int left = size_buf, r = 0;
+	int left = size_buf, r = 0, s = 0;
 	while( left > 0 )
 	{
-		if( (r = send( (int)fd, buff, left, 0)) == -1 )
+		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			break;
+		}
+		s += r;
+		left -= r;
+	}
+
+
+
+
+	//send body
+	left = msg->hdr.len, r = 0, s = 0;
+	while( left > 0 )
+	{
+		if( (r = send( (int)fd, msg->buf+s, left, 0)) == -1 )
 		{
 			if( errno == EINTR )
 			{
@@ -344,10 +418,117 @@ int sendData( long fd, message_data_t *msg )
 		{
 			return 0;
 		}
+		s += r;
+		left -= r;
+	}
+
+	free( buff );
+	return( size_buf + msg->hdr.len );
+}
+
+
+
+
+/**
+ * @brief
+ */
+int readMsg(long fd, message_t *msg)
+{
+	int left = 0, r = 0, s= 0;
+	size_t size_buf = sizeof(msg->hdr.op) + sizeof(msg->hdr.sender) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver);
+	char *buff = NULL;
+	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
+	{
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocating space for buffer" );
+		return EXIT_FAILURE;
+	}
+
+	//receive hdr
+	left = sizeof(msg->hdr.op) + sizeof(msg->hdr.sender), r = 0, s = 0;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)fd, buff+s, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		s += r;
+		left -= r;
+	}
+
+	int offset = 0;
+	memcpy( &msg->hdr.op, buff + offset, sizeof( int ) ); //copy op
+
+	offset += sizeof( int );
+	memcpy( msg->hdr.sender, buff+offset, sizeof( msg->hdr.sender ) ); //copy sender
+
+
+
+	//receive body hdr
+	left = sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver), r = 0;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)fd, buff+s, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		s += r;
+		left -= r;
+	}
+
+	offset += sizeof( msg->hdr.sender );
+	memcpy( &msg->data.hdr.len, buff+offset, sizeof( msg->data.hdr.len ) ); //copy body len
+
+	offset += sizeof( msg->data.hdr.len );
+	memcpy( msg->data.hdr.receiver, buff+offset, sizeof( msg->data.hdr.receiver ) ); //copy receiver name
+
+
+
+	//space allocation for the message body
+	if( (msg->data.buf = ( char * )malloc( msg->data.hdr.len * sizeof( char ) )) == NULL )
+	{
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocating space for message body" );
+		return EXIT_FAILURE;
+	}
+	//receive body
+	left = msg->data.hdr.len, r = 0, s = 0;
+	while( left > 0 )
+	{
+		if( (r = recv( (int)fd, msg->data.buf+s, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		s += r;
 		left -= r;
 	}
 
 
 	free( buff );
-	return( size_buf );
+
+	return ( size_buf + msg->data.hdr.len );
 }

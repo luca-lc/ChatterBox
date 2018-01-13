@@ -50,7 +50,7 @@ void pars( char *name, struct s_conf *s )
     if( (f=fopen( name, "r" )) == NULL )
     {
         perror("fopen()");
-        fprintf( stderr, "Problem to open file %s", name );
+        fprintf( stderr, "Problem to open file %s\n", name );
     }
 
 
