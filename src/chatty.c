@@ -212,31 +212,64 @@ int main(int argc, char *argv[])
 
     unlink(SOCKNAME);
 
-    threadpool_t *mypool = pool_creation( );
+//    threadpool_t *mypool = pool_creation( );
+//
+//    int s_fd, c_fd;
+//
+//    struct sockaddr_un se;
+//    strncpy( se.sun_path, SOCKNAME, UNIX_PATH_MAX );
+//    se.sun_family = AF_UNIX;
+//
+//    s_fd = socket( AF_UNIX, SOCK_STREAM, 0 );
+//    bind( s_fd, (struct sockaddr *)&se, sizeof(se) );
+//    listen( s_fd, _MAX_CONN );
+//
+//    while( true )
+//    {
+//    	c_fd = accept( s_fd, NULL, 0 );
+//    	if( c_fd != -1 )
+//    	{
+//    		threadpool_add( mypool, mng_conn, (int)c_fd );
+//    	}
+//    	else
+//    	{
+//    		fprintf( stderr, "ERROR ESTABLISHING CONNECTION\n");
+//    		continue;
+//    	}
+//    }
 
-    int s_fd, c_fd;
 
-    struct sockaddr_un se;
-    strncpy( se.sun_path, SOCKNAME, UNIX_PATH_MAX );
-    se.sun_family = AF_UNIX;
 
-    s_fd = socket( AF_UNIX, SOCK_STREAM, 0 );
-    bind( s_fd, (struct sockaddr *)&se, sizeof(se) );
-    listen( s_fd, _MAX_CONN );
 
-    while( true )
-    {
-    	c_fd = accept( s_fd, NULL, 0 );
-    	if( c_fd != -1 )
-    	{
-    		threadpool_add( mypool, mng_conn, (int)c_fd );
-    	}
-    	else
-    	{
-    		fprintf( stderr, "ERROR ESTABLISHING CONNECTION\n");
-    		continue;
-    	}
-    }
+    hashtable_t *users = initTable( _MAX_CONN );
+
+    checkin_arg in;
+    in.myt = users;
+
+    in.name = "Luca";
+    checkin( &in );
+
+	in.name = "Roby";
+	checkin( &in );
+
+	in.name = "Betta";
+	checkin( &in );
+
+	ht_elem_t *b = search( users, "Betta" );
+	message_t *msg = NULL;
+	for( int i = 0; i < 30; i++ )
+	{
+		msg = (message_t *)malloc( sizeof( message_t ) );
+		setHeader( &msg->hdr, 200+i, "luca" );
+		char *tmp = (char *)malloc( 250 * sizeof( char ) );
+		strcpy( tmp, "CIAO MAMMA GUARDA COME MI DIVERTO" );
+		setData( &msg->data, b->nickname, tmp, strlen(tmp)+1 );
+		push( b->msg_hist, msg );
+	}
+
+	msg = b->msg_hist->tail->ptr;
+	printf( "%d\n", msg->hdr.op );
+	printf( "%s\n", msg->data.buf );
 
 	return 0;
 }

@@ -59,7 +59,8 @@ pthread_mutex_t reg_lock = PTHREAD_MUTEX_INITIALIZER;
 bool checkin( checkin_arg *arg )
 {
 	bool out = false;
-	if( (out = search( arg->myt, arg->name )) == false )
+
+	if( search( arg->myt, arg->name ) == NULL )
 	{
 		pthread_mutex_lock( &reg_lock );
 			out = insert( arg->myt, arg->name );
@@ -86,7 +87,7 @@ bool checkin( checkin_arg *arg )
 bool delete( checkin_arg *arg )
 {
 	bool out = false;
-	if( search( arg->myt, arg->name) == true )
+	if( search( arg->myt, arg->name) != NULL )
 	{
 		out = removing( arg->myt, arg->name );
 	}

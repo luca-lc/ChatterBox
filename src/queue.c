@@ -75,6 +75,7 @@ queue_t *initialQueue()
     q->head = ( node_t * )malloc( sizeof( node_t ) );
     q->head->ptr = NULL;
     q->head->next = NULL;
+    q->head->prev = NULL;
     q->tail = q->head;
     q->queue_len = 0;
 
@@ -96,6 +97,7 @@ int push( queue_t *q, void *new_data )
 		pthread_mutex_lock( &queue_lock );
 		q->tail->ptr = new_data;
 		q->tail->next = NULL;
+		q->tail->prev = NULL;
 		pthread_mutex_unlock( &queue_lock );
 	}
 	else
@@ -111,6 +113,7 @@ int push( queue_t *q, void *new_data )
 
 		pthread_mutex_lock( &queue_lock );
 		q->tail->next = newn;
+		q->tail->next->prev = q->tail;
 		q->tail = newn;
 		pthread_mutex_unlock( &queue_lock );
 	}
@@ -131,16 +134,20 @@ int push( queue_t *q, void *new_data )
  */
 void *pull( queue_t *q )
 {
-	node_t *tmp = NULL;
+	void *ret = NULL;
+	if( q->head->ptr != NULL )
+	{
+		node_t *tmp = NULL;
 
-	tmp = (node_t *)q->head;
+		tmp = (node_t *)q->head;
 
-	pthread_mutex_lock( &queue_lock );
-	q->head = q->head->next;
-	q->queue_len -= 1;
-	pthread_mutex_unlock( &queue_lock );
+		pthread_mutex_lock( &queue_lock );
+		q->head = q->head->next;
+		q->queue_len -= 1;
+		pthread_mutex_unlock( &queue_lock );
 
-	void *ret = tmp->ptr;
+		ret = tmp->ptr;
+	}
 
 	return ret;
 }

@@ -38,6 +38,7 @@ typedef struct hash_elem
 {
 	char *nickname;
 	int key;
+	queue_t *msg_hist;
 	queue_t *collision;
 }ht_elem_t;
 
@@ -88,7 +89,7 @@ bool insert( hashtable_t *table, char *name );
  * @return		true if user is present
  * 				false otherwise
  */
-bool search( hashtable_t *table, char *name );
+ht_elem_t *search( hashtable_t *table, char *name );
 
 
 

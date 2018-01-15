@@ -122,7 +122,8 @@ bool insert( hashtable_t *table, char *name )
 	if( table->elem[val].nickname == NULL )
 	{
 		pthread_mutex_lock( &hash_lock );
-		table->elem[val].nickname = (char *)malloc( 250 * sizeof( char ) );
+		table->elem[val].nickname = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) );
+		table->elem[val].msg_hist = initialQueue();
 		strcpy( table->elem[val].nickname, name );
 		table->elem[val].key = name[0];
 		table->elem[val].collision = NULL;
@@ -137,7 +138,8 @@ bool insert( hashtable_t *table, char *name )
 			table->elem[val].collision = initialQueue();
 		}
 		ht_elem_t *tmp = (ht_elem_t *)malloc( sizeof( ht_elem_t ) );
-		tmp->nickname = ( char * )malloc( 250 * sizeof( char ) );
+		tmp->nickname = ( char * )malloc( MAX_NAME_LENGTH * sizeof( char ) );
+		tmp->msg_hist = initialQueue();
 		strcpy(tmp->nickname, name);
 		tmp->key = name[0];
 		tmp->collision = NULL;
@@ -154,7 +156,6 @@ bool insert( hashtable_t *table, char *name )
 		}
 	}
 
-	printf( "puppa" );
 	return false;
 }
 
@@ -167,7 +168,7 @@ bool insert( hashtable_t *table, char *name )
  * @return		true if user is present
  * 				false otherwise
  */
-bool search( hashtable_t *table, char *name )
+ht_elem_t *search( hashtable_t *table, char *name )
 {
 	int val = hashVal( name[0] );
 
@@ -175,7 +176,7 @@ bool search( hashtable_t *table, char *name )
 	{
 		if( strcmp(table->elem[val].nickname, name) == 0 )
 		{
-			return true;
+			return &table->elem[val];
 		}
 		else
 		{
@@ -191,13 +192,13 @@ bool search( hashtable_t *table, char *name )
 				}
 				if( strcmp(tmp->nickname, name) == 0 )
 				{
-					return true;
+					return &table->elem[val];
 				}
 			}
 		}
 	}
 
-	return false;
+	return NULL;
 }
 
 

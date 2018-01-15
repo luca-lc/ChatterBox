@@ -27,6 +27,7 @@ typedef struct node
 {
     void *ptr;
     struct node *next;
+    struct node *prev;
 }node_t;
 
 

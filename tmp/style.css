@@ -1,0 +1,40 @@
+.main-raw
+{
+    padding-left: 10%;
+    margin-bottom: 3%;
+}
+
+img
+{
+    width: 40px;
+}
+
+a
+{
+    margin-bottom: 5%;
+}
+
+
+i.dir
+{
+    padding-right: 2%;
+    vertical-align: middle;
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background: url("diricons.png");
+    background-size: 40px;
+    background-repeat: no-repeat;
+}
+
+i.doc
+{
+    padding-right: 2%;
+    vertical-align: middle;
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background: url("docicons.png");
+    background-size: 40px;
+    background-repeat: no-repeat;
+}
