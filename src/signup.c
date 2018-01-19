@@ -42,9 +42,6 @@
 #include <src/signup.h>
 
 
-pthread_mutex_t reg_lock = PTHREAD_MUTEX_INITIALIZER;
-
-
 
 /******************************************************************************
 									FUNCTIONS
@@ -56,21 +53,19 @@ pthread_mutex_t reg_lock = PTHREAD_MUTEX_INITIALIZER;
  * @return 		true if user is logged
  * 				false otherwise
  */
-bool checkin( checkin_arg *arg )
+int checkin( hashtable_t *users, char *nick )
 {
-	bool out = false;
+	int out = false;
 
-	if( search( arg->myt, arg->name ) == NULL )
+	if( search( users, nick ) == NULL )
 	{
-		pthread_mutex_lock( &reg_lock );
-			out = insert( arg->myt, arg->name );
-		pthread_mutex_unlock( &reg_lock );
+		out = insert( users, nick );
 		return out;
 	}
 	else
 	{
-		fprintf( stderr, "%s already exists\n", arg->name );
-		return out;
+//		fprintf( stderr, "%s already exists\n", arg->name );
+		return OP_NICK_ALREADY;
 	}
 	return out;
 }
@@ -79,17 +74,33 @@ bool checkin( checkin_arg *arg )
 
 /**
  * @brief		deletes the user from hash table
- * @var arg		pointer to data structure where saved the pointer to hash table
- * 				and pointer to string where saved the nickname to remove
+ * @var users	pointer to data structure where saved the user list
+ * @var nick	pointer to string where saved the nickname to remove
  * @return		true if user is removed
  * 				false otherwise
  */
-bool delete( checkin_arg *arg )
+user_t *connecting( hashtable_t *users, char *nick )
+{
+	user_t *user = search( users, nick );
+
+	return user;
+}
+
+
+
+/**
+ * @brief		deletes the user from hash table
+ * @var users	pointer to data structure where saved the user list
+ * @var nick	pointer to string where saved the nickname to remove
+ * @return		true if user is removed
+ * 				false otherwise
+ */
+bool delete( hashtable_t *users, char *nick )
 {
 	bool out = false;
-	if( search( arg->myt, arg->name) != NULL )
+	if( search( users, nick ) != NULL )
 	{
-		out = removing( arg->myt, arg->name );
+		out = removing( users, nick );
 	}
 
 	return out;

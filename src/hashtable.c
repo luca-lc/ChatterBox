@@ -47,9 +47,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <src/pool.h>
-#include "src/hashtable.h"
 #include <string.h>
+#include <src/pool.h>
+#include <src/hashtable.h>
+
 
 
 
@@ -57,8 +58,7 @@
 								   FUNCTIONS
 ******************************************************************************/
 
-pthread_mutex_t hash_lock = PTHREAD_MUTEX_INITIALIZER;	///< declaration of mutex to lock hash table
-
+int _MAX_HIST;
 
 
 /**
@@ -81,27 +81,30 @@ int hashVal( int key )
 hashtable_t *initTable( unsigned int length )
 {
 	hashtable_t *table;
+	//creation table
 	if( (table = ( hashtable_t * )malloc( sizeof( hashtable_t ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to create hash table" );
 		return NULL;
 	}
-
-	if( (table->elem = ( ht_elem_t * )malloc( length * sizeof( ht_elem_t ) )) == NULL )
+	//creation cell
+	if( (table->users = ( ht_elem_t * )malloc( length * sizeof( ht_elem_t ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to create elements in hash table" );
 		free( table );
 		return NULL;
 	}
-
+	//init cell
 	for( int i = 0; i < length; i++ )
 	{
-		table->elem[i].nickname = NULL;
+		table->users[i].user = NULL;
+		table->users[i].collision = NULL;
 	}
-
-
+	//init elem table
+	table->ht_lock = ( pthread_mutex_t )PTHREAD_MUTEX_INITIALIZER;
 	table->size = length;
-	table->n_elem = 0;
+	table->reg_users = 0;
+	queue_t *active_user = initialQueue();
 
 	return table;
 }
@@ -117,35 +120,66 @@ hashtable_t *initTable( unsigned int length )
  */
 bool insert( hashtable_t *table, char *name )
 {
+
 	int val = hashVal( name[0] );
 
-	if( table->elem[val].nickname == NULL )
+	if( table->users[val].user == NULL )
 	{
-		pthread_mutex_lock( &hash_lock );
-		table->elem[val].nickname = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) );
-		table->elem[val].msg_hist = initialQueue();
-		strcpy( table->elem[val].nickname, name );
-		table->elem[val].key = name[0];
-		table->elem[val].collision = NULL;
-		table->n_elem += 1;
-		pthread_mutex_unlock( &hash_lock );
+
+		pthread_mutex_lock( &table->ht_lock );
+			if( (table->users[val].user = (user_t *)malloc( sizeof( user_t ) )) == NULL )
+			{
+
+				pthread_mutex_unlock( &table->ht_lock );
+				return false;
+			}
+
+			if( (table->users[val].user->nickname = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) )) == NULL )
+			{
+				pthread_mutex_unlock( &table->ht_lock );
+				return false;
+			}
+			strcpy( table->users[val].user->nickname, name );
+
+			table->users[val].user->chats = initialQueue();
+
+			table->users[val].user->key = val;
+
+			table->reg_users += 1;
+
+		pthread_mutex_unlock( &table->ht_lock );
 		return true;
 	}
 	else
 	{
-		if( table->elem[val].collision == NULL )
+		pthread_mutex_lock( &table->ht_lock );
+			if( table->users[val].collision == NULL )
+			{
+				table->users[val].collision = initialQueue();
+			}
+		pthread_mutex_unlock( &table->ht_lock );
+
+		user_t *tmp;
+		if( (tmp = (user_t *)malloc( sizeof( user_t ) )) == NULL )
 		{
-			table->elem[val].collision = initialQueue();
+			return false;
 		}
-		ht_elem_t *tmp = (ht_elem_t *)malloc( sizeof( ht_elem_t ) );
-		tmp->nickname = ( char * )malloc( MAX_NAME_LENGTH * sizeof( char ) );
-		tmp->msg_hist = initialQueue();
-		strcpy(tmp->nickname, name);
-		tmp->key = name[0];
-		tmp->collision = NULL;
-		if( push( table->elem[val].collision, tmp ) == 0 )
+		if( (tmp->nickname = ( char * )malloc( MAX_NAME_LENGTH * sizeof( char ) )) == NULL )
 		{
-			table->n_elem += 1;
+			return false;
+		}
+		strcpy(tmp->nickname, name);
+
+		tmp->key = val;
+
+		tmp->chats = initialQueue();
+
+		if( push( table->users[val].collision, tmp ) == 0 )
+		{
+			pthread_mutex_lock( &table->ht_lock );
+				table->reg_users += 1;
+			pthread_mutex_unlock( &table->ht_lock );
+
 			return true;
 		}
 		else
@@ -168,31 +202,32 @@ bool insert( hashtable_t *table, char *name )
  * @return		true if user is present
  * 				false otherwise
  */
-ht_elem_t *search( hashtable_t *table, char *name )
+user_t *search( hashtable_t *table, char *name )
 {
 	int val = hashVal( name[0] );
 
-	if( table->elem[val].nickname != NULL )
+	if( table->users[val].user != NULL )
 	{
-		if( strcmp(table->elem[val].nickname, name) == 0 )
+		if( strcmp(table->users[val].user->nickname, name) == 0 )
 		{
-			return &table->elem[val];
+			return table->users[val].user;
 		}
 		else
 		{
-			ht_elem_t *tmp = NULL;
-			if( table->elem[val].collision != NULL && table->elem[val].collision->head != NULL )
+			user_t *tmp = NULL;
+			if( table->users[val].collision != NULL && table->users[val].collision->head != NULL )
 			{
-				node_t *nt = table->elem[val].collision->head;
+				node_t *nt = table->users[val].collision->head;
 				tmp = nt->ptr;
-				while( strcmp(tmp->nickname,name) != 0 && nt != NULL )
+				while( strcmp(tmp->nickname, name) != 0 && nt != NULL )
 				{
 					tmp = nt->ptr;
 					nt = nt->next;
 				}
+
 				if( strcmp(tmp->nickname, name) == 0 )
 				{
-					return &table->elem[val];
+					return tmp;
 				}
 			}
 		}
@@ -211,62 +246,93 @@ bool removing( hashtable_t *table, char *name )
 	int val = hashVal( name[0] );
 
 	//removes nickname that is in hash table
-	if( strcmp( table->elem[val].nickname, name) == 0 )
+	if( strcmp( table->users[val].user->nickname, name) == 0 )
 	{
-		if( table->elem[val].collision != NULL ) //replaces this nickname with the first element in the overflow queue
+		user_t *subst = NULL;
+		if( table->users[val].collision != NULL )
 		{
-			ht_elem_t *first_elem = pull( table->elem[val].collision );
-
-			pthread_mutex_lock( &hash_lock );
-			strcpy( table->elem[val].nickname, first_elem->nickname );
-			pthread_mutex_unlock( &hash_lock );
-
-			free( first_elem );
-
-			return true;
+			subst = pull( table->users[val].collision );
 		}
-		else //replaces nickname with NULL
-		{
-			table->elem[val].nickname = NULL;
-			return true;
-		}
-	}
-	else //removes nickname that is in the overflow queue
-	{
-		ht_elem_t *e = NULL;
-		if( table->elem[val].collision != NULL && table->elem[val].collision->head != NULL ) //if there is at least one element in the overflow queue
-		{
-			node_t *node = table->elem[val].collision->head;
-			e = node->ptr;
-			node_t *prev = NULL;
-
-			while( strcmp( e->nickname, name) != 0 && node != NULL ) //selects the node of the queue
+		user_t *tmp = table->users[val].user;
+		pthread_mutex_lock( &table->ht_lock );
+			free( tmp->nickname );
+			free( tmp->chats );
+			free( tmp );
+			tmp->key = -1;
+			table->users[val].user = NULL;
+			if( subst != NULL )
 			{
-				prev = node;
-				node = node->next;
-				e = node->ptr;
+				table->users[val].user = subst;
+			}
+			table->reg_users -= 1;
+		pthread_mutex_unlock( &table->ht_lock );
+
+		return true;
+	}
+	else
+	{
+		user_t *tmp = NULL;
+		if( table->users[val].collision != NULL && table->users[val].collision->head != NULL )
+		{
+			node_t *ne = table->users[val].collision->head->next;
+			node_t *e = table->users[val].collision->head;
+			tmp = e->ptr;
+			while( strcmp(tmp->nickname, name) != 0 && ne != NULL )
+			{
+				e = ne;
+				tmp = e->ptr;
+				ne = ne->next;
 			}
 
-			if( node != NULL )
+			if( strcmp(tmp->nickname, name) == 0 )
 			{
-				if( prev == NULL ) //if the first element
+				if( ne == NULL )
 				{
-					pthread_mutex_lock( &hash_lock );
-					table->elem[val].collision->head = table->elem[val].collision->head->next;
-					free(node);
-					pthread_mutex_unlock( &hash_lock );
-
-					return true;
+					if( e->prev == NULL )
+					{
+						table->users[val].collision->head = e->next;
+						table->users[val].collision->tail = e->prev;
+						free( tmp->chats );
+						free( tmp->nickname );
+						tmp->key = -1;
+						free( e );
+						return true;
+					}
+					else
+					{
+						table->users[val].collision->tail = e->prev;
+						e->prev->next = NULL;
+						free( tmp->chats );
+						free( tmp->nickname );
+						tmp->key = -1;
+						free( e );
+						return true;
+					}
 				}
-				else //if is in the queue in some position
+				else
 				{
-					pthread_mutex_lock( &hash_lock );
-					prev->next = node->next;
-					free( node );
-					pthread_mutex_unlock( &hash_lock );
-
-					return true;
+					if( e->prev == NULL )
+					{
+						table->users[val].collision->head = e->next;
+						e->next->prev = NULL;
+						free( tmp->chats );
+						free( tmp->nickname );
+						tmp->key = -1;
+						free( e );
+						return true;
+					}
+					else
+					{
+						e->prev->next = e->next;
+						e->next->prev = e->prev;
+						free( tmp->chats );
+						free( tmp->nickname );
+						tmp->key = -1;
+						free( e );
+						return true;
+					}
 				}
+
 			}
 		}
 	}

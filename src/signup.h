@@ -20,14 +20,8 @@
 #include <src/hashtable.h>
 #include "src/chatty.h"
 
+//extern hashtable_t *users;
 
-
-
-typedef struct args
-{
-	hashtable_t *myt;
-	char *name;
-}checkin_arg;
 
 /******************************************************************************
 									FUNCTIONS
@@ -35,13 +29,20 @@ typedef struct args
 /**
  *
  */
-bool checkin( checkin_arg *c_arg );
+int checkin( hashtable_t *users, char *nick );
 
 
 
 /**
  *
  */
-bool delete( checkin_arg *c_arg );
+user_t *connecting( hashtable_t *users, char *nick );
+
+
+
+/**
+ *
+ */
+bool delete( hashtable_t *users, char *nick );
 
 #endif /* SIGN_UP_H_ */

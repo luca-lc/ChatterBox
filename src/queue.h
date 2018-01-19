@@ -13,6 +13,7 @@
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
 
+#include <pthread.h>
 
 
 /******************************************************************************
@@ -40,6 +41,7 @@ typedef struct node
  */
 typedef struct queue
 {
+	pthread_mutex_t queue_lock;
     node_t *head; ///< pointer to head of queue
     node_t *tail; ///< pointer to tail of queue
     unsigned long queue_len; ///< variable to save queue lenght

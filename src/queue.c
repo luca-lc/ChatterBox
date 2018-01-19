@@ -56,9 +56,6 @@
 /******************************************************************************
 									FUNCTIONS
 ******************************************************************************/
-pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
-
-
 /**
  * @brief       allocates space for new queue
  * @return  q   pointer to new queue
@@ -72,6 +69,7 @@ queue_t *initialQueue()
         fprintf( stderr, "Problem to allocates space for queue" );
         exit( EXIT_FAILURE );
     }
+    q->queue_lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
     q->head = ( node_t * )malloc( sizeof( node_t ) );
     q->head->ptr = NULL;
     q->head->next = NULL;
@@ -94,11 +92,11 @@ int push( queue_t *q, void *new_data )
 {
 	if( q->tail->ptr == NULL )
 	{
-		pthread_mutex_lock( &queue_lock );
-		q->tail->ptr = new_data;
-		q->tail->next = NULL;
-		q->tail->prev = NULL;
-		pthread_mutex_unlock( &queue_lock );
+		pthread_mutex_lock( &q->queue_lock );
+			q->tail->ptr = new_data;
+			q->tail->next = NULL;
+			q->tail->prev = NULL;
+		pthread_mutex_unlock( &q->queue_lock );
 	}
 	else
 	{
@@ -111,16 +109,16 @@ int push( queue_t *q, void *new_data )
 		newn->ptr = new_data;
 		newn->next = NULL;
 
-		pthread_mutex_lock( &queue_lock );
-		q->tail->next = newn;
-		q->tail->next->prev = q->tail;
-		q->tail = newn;
-		pthread_mutex_unlock( &queue_lock );
+		pthread_mutex_lock( &q->queue_lock );
+			q->tail->next = newn;
+			q->tail->next->prev = q->tail;
+			q->tail = newn;
+		pthread_mutex_unlock( &q->queue_lock );
 	}
 
-	pthread_mutex_lock( &queue_lock );
-	q->queue_len += 1;
-	pthread_mutex_unlock( &queue_lock );
+	pthread_mutex_lock( &q->queue_lock );
+		q->queue_len += 1;
+	pthread_mutex_unlock( &q->queue_lock );
 
 	return 0;
 }
@@ -139,12 +137,11 @@ void *pull( queue_t *q )
 	{
 		node_t *tmp = NULL;
 
-		tmp = (node_t *)q->head;
-
-		pthread_mutex_lock( &queue_lock );
-		q->head = q->head->next;
-		q->queue_len -= 1;
-		pthread_mutex_unlock( &queue_lock );
+		pthread_mutex_lock( &q->queue_lock );
+			tmp = (node_t *)q->head;
+			q->head = q->head->next;
+			q->queue_len -= 1;
+		pthread_mutex_unlock( &q->queue_lock );
 
 		ret = tmp->ptr;
 	}
@@ -162,16 +159,19 @@ void clear_queue( queue_t *q )
 {
 	while( q->head != q->tail )
 	{
-		node_t *tmp = (node_t *)q->head;
-		q->head = q->head->next;
+		pthread_mutex_lock( &q->queue_lock );
+			node_t *tmp = (node_t *)q->head;
+			q->head = q->head->next;
+		pthread_mutex_unlock( &q->queue_lock );
 		free( tmp );
 	}
 
-	q->head->ptr = NULL;
-	q->head->next = NULL;
-	q->tail = q->head;
-
-	q->queue_len = 0;
+	pthread_mutex_lock( &q->queue_lock );
+		q->head->ptr = NULL;
+		q->head->next = NULL;
+		q->tail = q->head;
+		q->queue_len = 0;
+	pthread_mutex_unlock( &q->queue_lock );
 }
 
 /**
@@ -181,17 +181,19 @@ void clear_queue( queue_t *q )
  */
 void destroy_queue( queue_t *q )
 {
-    while( q->head != q->tail )
-    {
-        node_t *tmp = (node_t *)q->head;
-        q->head = q->head->next;
-        free( tmp );
-    }
+	pthread_mutex_lock( &q->queue_lock );
+		while( q->head != q->tail )
+		{
+			node_t *tmp = (node_t *)q->head;
+			q->head = q->head->next;
+			free( tmp );
+		}
 
-    if( q->head )
-    {
-        free( (void *)q->head );
-    }
+		if( q->head )
+		{
+			free( (void *)q->head );
+		}
+	pthread_mutex_unlock( &q->queue_lock );
 
     free( q );
 }

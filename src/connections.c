@@ -121,6 +121,59 @@ int readHeader(long connfd, message_hdr_t *hdr)
 }
 
 
+/**
+ * @brief
+ */
+int sendHeader(long connfd, message_hdr_t *hdr)
+{
+	size_t size_buf = sizeof(hdr->op) + sizeof(hdr->sender);
+	char *buff;
+
+	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
+	{
+		perror( "malloc()" );
+		fprintf( stderr, "Problem to allocating space for buffer" );
+		return EXIT_FAILURE;
+	}
+
+	//divide the buffer contents
+	int offset = 0;
+	memcpy( buff + offset, &hdr->op, sizeof( hdr->op ) ); //copy op in hdr's field
+
+	offset += sizeof( hdr->op );
+	memcpy( buff + offset, hdr->sender, sizeof( hdr->sender ) ); //copy sender in hdr's field
+
+
+
+
+	int left = size_buf, r = 0, s = 0;
+
+	//receive the buffer
+	while( left > 0 )
+	{
+		if( (r = send( (int)connfd, buff+s, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		s += r;
+		left -= r;
+	}
+
+
+
+	free( buff );
+	return( size_buf );
+}
+
+
 
 /**
  * @brief
@@ -156,117 +209,66 @@ int sendRequest(long fd, message_t *msg)
 	memcpy( buff+offset, msg->data.buf, msg->data.hdr.len ); //copy body msg in buffer
 
 
-	switch( msg->hdr.op )
+
+	//send header
+	left =  sizeof(msg->hdr.op) + sizeof( msg->hdr.sender), r = 0, s = 0;
+	while( left > 0 )
 	{
-		//send only header
-		case REGISTER_OP		:
-		case CONNECT_OP			:
-		case GETPREVMSGS_OP		:
-		case USRLIST_OP			:
-		case UNREGISTER_OP		:
-		case DISCONNECT_OP		:
-		case OP_OK				:
-		case OP_FAIL			:
-		case OP_NICK_ALREADY	:
-		case OP_NICK_UNKNOWN	:
-		case OP_MSG_TOOLONG		:
-		case OP_END				:
-		case OP_NO_SUCH_FILE	:
+		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
 		{
-			left = sizeof(msg->hdr.op) + sizeof( msg->hdr.sender), r = 0, s = 0;
-			while( left > 0 )
+			if( errno == EINTR )
 			{
-				if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
-				{
-					if( errno == EINTR )
-					{
-						continue;
-					}
-					return -1;
-				}
-				if( r == 0 )
-				{
-					return 0;
-				}
-				s += r;
-				left -= r;
+				continue;
 			}
-		}break;
-		//send all message
-		case POSTTXT_OP			:
-		case POSTTXTALL_OP		:
-		case POSTFILE_OP		:
-		case GETFILE_OP			:
-		case CREATEGROUP_OP		:
-		case ADDGROUP_OP		:
-		case DELGROUP_OP		:
-		case TXT_MESSAGE		:
-		case FILE_MESSAGE		:
-			{
-				//send header
-				left =  sizeof(msg->hdr.op) + sizeof( msg->hdr.sender), r = 0, s = 0;
-				while( left > 0 )
-				{
-					if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
-					{
-						if( errno == EINTR )
-						{
-							continue;
-						}
-						return -1;
-					}
-					if( r == 0 )
-					{
-						return 0;
-					}
-					s += r;
-					left -= r;
-				}
-
-				//send body header
-				left =  sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver), r = 0;
-				while( left > 0 )
-				{
-					if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
-					{
-						if( errno == EINTR )
-						{
-							continue;
-						}
-						return -1;
-					}
-					if( r == 0 )
-					{
-						return 0;
-					}
-					s += r;
-					left -= r;
-				}
-
-				//send body
-				left =  msg->data.hdr.len, r = 0;
-				while( left > 0 )
-				{
-					if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
-					{
-						if( errno == EINTR )
-						{
-							continue;
-						}
-						return -1;
-					}
-					if( r == 0 )
-					{
-						return 0;
-					}
-					s += r;
-					left -= r;
-				}
-
-			}break;
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		s += r;
+		left -= r;
 	}
 
+	//send body header
+	left =  sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver), r = 0;
+	while( left > 0 )
+	{
+		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		s += r;
+		left -= r;
+	}
 
+	//send body
+	left =  msg->data.hdr.len, r = 0;
+	while( left > 0 )
+	{
+		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
+		{
+			if( errno == EINTR )
+			{
+				continue;
+			}
+			return -1;
+		}
+		if( r == 0 )
+		{
+			return 0;
+		}
+		s += r;
+		left -= r;
+	}
 
 
 	free( buff );

@@ -10,8 +10,9 @@
 
 #include <assert.h>
 #include <string.h>
-#include <./src/config.h>
-#include <./src/ops.h>
+#include <src/config.h>
+#include <src/ops.h>
+#include <src/queue.h>
 
 /**
  * @file  message.h
@@ -66,6 +67,29 @@ typedef struct {
     message_hdr_t  hdr;
     message_data_t data;
 } message_t;
+
+
+
+/**
+ *
+ */
+typedef struct ch_msg
+{
+	char *chat_title;
+	queue_t *messages;
+}chat_t;
+
+
+
+/**
+ *
+ */
+typedef struct grp_msg
+{
+	char *chat_title;
+	queue_t *participants;
+	queue_t *messages;
+}group_chat_t;
 
 /* ------ funzioni di utilità ------- */
 
