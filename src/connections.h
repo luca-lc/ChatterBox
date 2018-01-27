@@ -78,7 +78,10 @@ int readData(long fd, message_data_t *data);
  */
 int readMsg(long fd, message_t *msg);
 
-/* da completare da parte dello studente con altri metodi di interfaccia */
+/**
+ *
+ */
+int sendHeader(long connfd, message_hdr_t *hdr);
 
 
 // ------- client side ------

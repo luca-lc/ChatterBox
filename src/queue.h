@@ -78,6 +78,13 @@ void *pull( queue_t *q );
 
 
 /**
+ *
+ */
+int remove_node( queue_t *q, node_t *rm );
+
+
+
+/**
  * @brief			clears all nodes from queue, updates head, tail and length
  * @param	 q		pointer to queue to be cleaned
  */

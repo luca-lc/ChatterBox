@@ -75,7 +75,7 @@ typedef struct {
  */
 typedef struct ch_msg
 {
-	char *chat_title;
+	char chat_title[MAX_NAME_LENGTH];
 	queue_t *messages;
 }chat_t;
 
@@ -86,7 +86,7 @@ typedef struct ch_msg
  */
 typedef struct grp_msg
 {
-	char *chat_title;
+	char chat_title[MAX_NAME_LENGTH];
 	queue_t *participants;
 	queue_t *messages;
 }group_chat_t;

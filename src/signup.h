@@ -20,8 +20,6 @@
 #include <src/hashtable.h>
 #include "src/chatty.h"
 
-//extern hashtable_t *users;
-
 
 /******************************************************************************
 									FUNCTIONS

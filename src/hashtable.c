@@ -104,7 +104,8 @@ hashtable_t *initTable( unsigned int length )
 	table->ht_lock = ( pthread_mutex_t )PTHREAD_MUTEX_INITIALIZER;
 	table->size = length;
 	table->reg_users = 0;
-	queue_t *active_user = initialQueue();
+	table->active_user = initialQueue();
+	table->groups = initialQueue();
 
 	return table;
 }
@@ -134,11 +135,6 @@ bool insert( hashtable_t *table, char *name )
 				return false;
 			}
 
-			if( (table->users[val].user->nickname = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) )) == NULL )
-			{
-				pthread_mutex_unlock( &table->ht_lock );
-				return false;
-			}
 			strcpy( table->users[val].user->nickname, name );
 
 			table->users[val].user->chats = initialQueue();
@@ -164,10 +160,7 @@ bool insert( hashtable_t *table, char *name )
 		{
 			return false;
 		}
-		if( (tmp->nickname = ( char * )malloc( MAX_NAME_LENGTH * sizeof( char ) )) == NULL )
-		{
-			return false;
-		}
+
 		strcpy(tmp->nickname, name);
 
 		tmp->key = val;
@@ -257,7 +250,6 @@ bool removing( hashtable_t *table, char *name )
 		pthread_mutex_lock( &table->ht_lock );
 			free( tmp->nickname );
 			free( tmp->chats );
-			free( tmp );
 			tmp->key = -1;
 			table->users[val].user = NULL;
 			if( subst != NULL )
