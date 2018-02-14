@@ -3,8 +3,12 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <pthread.h>
 
-struct statistics {
+
+struct statistics
+{
+	 pthread_mutex_t statLock;							// lock per aggiorare gli errori
     unsigned long nusers;                       // n. di utenti registrati
     unsigned long nonline;                      // n. di utenti connessi
     unsigned long ndelivered;                   // n. di messaggi testuali consegnati
@@ -13,6 +17,7 @@ struct statistics {
     unsigned long nfilenotdelivered;            // n. di file non ancora consegnati
     unsigned long nerrors;                      // n. di messaggi di errore
 };
+
 
 /* aggiungere qui altre funzioni di utilita' per le statistiche */
 
@@ -26,7 +31,7 @@ struct statistics {
  * @return 0 in caso di successo, -1 in caso di fallimento 
  */
 static inline int printStats(FILE *fout) {
-    extern struct statistics chattyStats;
+	extern struct statistics chattyStats;
 
     if (fprintf(fout, "%ld - %ld %ld %ld %ld %ld %ld %ld\n",
 		(unsigned long)time(NULL),

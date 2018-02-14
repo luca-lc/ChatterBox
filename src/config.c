@@ -49,8 +49,9 @@ void pars( char *name, struct s_conf *s )
     FILE *f;
     if( (f=fopen( name, "r" )) == NULL )
     {
-        perror("fopen()");
+        perror( "fopen()" );
         fprintf( stderr, "Problem to open file %s\n", name );
+        exit( EXIT_FAILURE );
     }
 
 
@@ -127,4 +128,6 @@ void pars( char *name, struct s_conf *s )
 
         str = NULL;
     }
+
+    fclose( f );
 }

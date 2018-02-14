@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <src/config.h>
+#include <src/queue.h>
 
 
 
@@ -54,7 +55,6 @@ typedef struct task
 {
 	void(*function)(void *);
 	void *args;
-	int next;
 }thread_task_t;
 
 
@@ -74,7 +74,7 @@ typedef struct task
 typedef struct pool
 {
 	pthread_t *thread;
-	thread_task_t *task;
+	queue_t *task;
 	pthread_mutex_t lock_t;
 	pthread_cond_t cond_t;
 	int thread_crt;

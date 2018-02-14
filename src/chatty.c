@@ -23,40 +23,64 @@
 #include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <time.h>
+#include <ctype.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/poll.h>
+#include <sys/stat.h>
+
+#include "src/chatty.h"
 #include <src/stats.h>
 #include <src/queue.h>
 #include <src/signup.h>
 #include <src/ops.h>
 #include <src/pool.h>
-#include <time.h>
-#include <ctype.h>
 #include <src/connections.h>
 #include <src/hashtable.h>
-#include "src/chatty.h"
 #include <src/config.h>
 
-/* inserire gli altri include che servono */
+
+pthread_mutex_t poll_l = PTHREAD_MUTEX_INITIALIZER;
+static volatile int keepRUN = 1;
+
 /******************************************************************************
-								DEFINES
+										STRUCT AND TYPEDEF
 ******************************************************************************/
 /* struttura che memorizza le statistiche del server, struct statistics
  * e' definita in stats.h.
  */
-struct statistics  chattyStats = { 0,0,0,0,0,0,0 }; //#registered user,#client online,#delivered mes,#to be delivered message,#delivered files, #to be delivered files, #errors messages
-
-typedef struct arg_mng
-{
-	hashtable_t *users;
-	int con_fd;
-}arg_con;
-/******************************************************************************
-                                FUNCTIONS
-******************************************************************************/
+struct statistics  chattyStats = { PTHREAD_MUTEX_INITIALIZER,0,0,0,0,0,0,0 }; //#mutex,#registered user,#client online,#delivered mes,#to be delivered message,#delivered files, #to be delivered files, #errors messages
 
 
 
 /**
- * TODO
+ *
+ */
+typedef struct arg_rq_hand
+{
+	hashtable_t *users;
+	struct pollfd *con;
+	threadpool_t *pool;
+	int i_fd;
+	int fd;
+}rq_arg;
+
+
+
+/**
+ *
+ */
+typedef struct print_stats
+{
+	hashtable_t *chatty_users;
+	char *file;
+}arg_st;
+/******************************************************************************
+                                FUNCTIONS
+******************************************************************************/
+/**
+ *
  */
 static void usage(const char *progname)
 {
@@ -69,48 +93,43 @@ static void usage(const char *progname)
 /**
  *
  */
-void print_statistic( char *FileName )
+void update_st( hashtable_t *users )
 {
-
-	//check if 'FileName' exists
-	struct stat st;
-	if( stat( FileName, &st ) != -1 )
-	{
-		remove( FileName );
-	}
+	chattyStats.nonline = users->active_user->queue_len;
+	chattyStats.nusers = users->reg_users;
+}
 
 
+
+/**
+ *
+ */
+void print_statistic( hashtable_t *usr, char *FileName )
+{
 	FILE *stats;
-	int stat_o_time = 5;
 
-REOPEN:
-	stat_o_time = 5;
-	while( (stats = fopen( FileName, "a+" )) == NULL && stat_o_time > 0 )
-	{
-		perror( "fopen()" );
-		fprintf( stderr, "%s\n\n", FileName );
-		fprintf( stderr, "Try again %d times\n",  stat_o_time );
-		stat_o_time --;
-	}
-	if( stat_o_time == 0 )
-	{
-		fprintf( stderr, "Unable to open the file %s\n", FileName );
-	}
+	if( (stats = fopen( FileName, "a+" )) == NULL )
+		{
+			perror( "fopen()" );
+		}
 
 	int r = 0;
 
-	while( true && r == 0 )
-	{
-		r = printStats( stats );
-		sleep( 30 );
-	}
+		pthread_mutex_lock( &usr->ht_lock );
+			update_st( usr );
+		pthread_mutex_unlock( &usr->ht_lock );
 
-	close( stats );
+		r = printStats( stats );
+
+	fclose( stats );
+
 	if( r != 0 )
-	{
-		fprintf( stderr, "Some problems to write the file, try to re-open %s\n", FileName );
-goto REOPEN;
-	}
+		{
+			pthread_mutex_lock( &chattyStats.statLock );
+				chattyStats.nerrors += 1;
+			pthread_mutex_unlock( &chattyStats.statLock );
+			fprintf( stderr, "Some problems to write on file '%s'.\n", FileName );
+		}
 }
 
 
@@ -139,7 +158,6 @@ void configServer( struct s_conf *config )
 
 	//set the maximum number of messages to be saved
 	_MAX_HIST = config->MaxHistMsgs;
-
 }
 
 
@@ -202,614 +220,982 @@ void sendUlist( queue_t *u, message_t *msg, user_t *me, char *buff )
 /**
  *
  */
-void mng_conn( void *args )
+void clear_chat( queue_t *chat )
 {
-
-	//explode the arguments
-	arg_con *mycon = (arg_con *)args;
-	int c_fd = mycon->con_fd;
-	hashtable_t *users = mycon->users;
-
-	//set local variables
-	message_t msg;
-	user_t *me = NULL;
-	char *buff = NULL;
-	bool STOP = false;
-
-	printf( "\n--------------------------------------\n" );
-	printf( "Connection %d has been started", c_fd );
-	printf( "\n--------------------------------------\n\n" );
-
-	do
-	{
-		msg.hdr.op = -1;
-		if( readMsg( c_fd, &msg ) <= 0)
-		{
-			struct sigaction s;
-			memset( &s, 0, sizeof( s ) );
-			s.sa_handler=SIG_IGN;
-
-			if( sigaction( SIGPIPE, &s, NULL ) == -1 )
+	message_t *tmsg;
+	pthread_mutex_lock( &chat->queue_lock );
+		while( chat->head != chat->tail )
 			{
-				perror( "sigaction" );
+				tmsg = pull( chat );
+				free( tmsg->data.buf );
+				free( tmsg );
 			}
 
-			msg.hdr.op = DISCONNECT_OP;
-		}
+		tmsg = chat->head->ptr;
+		free( tmsg );
+		free( chat->head );
+	pthread_mutex_unlock( &chat->queue_lock );
 
-		switch( msg.hdr.op )
+	free( chat );
+}
+
+
+
+/**
+ *
+ */
+void requests_handler( void *args )
+{
+	// EXPLODE THE ARGUMENTS PASSED //
+	rq_arg 			*mycon = (rq_arg *)args;
+	hashtable_t 	*users = mycon->users;
+	struct pollfd 	*con = mycon->con;
+	int 				i = mycon->i_fd;
+	int 				c_fd = mycon->fd;
+
+
+	// SET LOCAL VARIABLES //
+	message_t 	msg;
+	user_t 		*me = NULL;
+	char 			*buff = NULL;
+	bool			STOP = false;
+
+
+	// START HANDLING //
+
+	//CLIENT CLOSES SOCKET OR HAS FINISHED SENDING THE MESSAGE
+	if( readMsg( c_fd, &msg ) <= 0)
 		{
+			node_t *rm = users->active_user->head;
+			user_t *u_rm = rm->ptr;
 
-		/*-----------------------------------------*/
-
-			case REGISTER_OP :
+			while( rm != NULL && u_rm->fd_online != c_fd )
 				{
-					int ack_reg;
-					ack_reg = checkin( users, msg.hdr.sender );
-
-					if( ack_reg == true ) //if the user has been registered
-					{
-						me = connecting( users, msg.hdr.sender );
-						if( me != NULL ) //if the user is logged on
+					rm = rm->next;
+					u_rm = rm->ptr;
+				}
+			int ack = remove_node( users->active_user, rm );
+			if( ack == 1 )
+				{
+					setHeader( &msg.hdr, OP_OK, "ChattyServer" );
+					STOP = true;
+				}
+			else
+				{
+					setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+					pthread_mutex_lock( &chattyStats.statLock );
+						chattyStats.nerrors += 1;
+					pthread_mutex_unlock( &chattyStats.statLock );
+				}
+			sendHeader( c_fd, &msg.hdr );
+		}
+	else
+		{
+			// MANAGE REQUEST DEPENDING ON THE 'OP'
+			switch( msg.hdr.op )
+				{
+				//===================================================================//
+					case REGISTER_OP :
 						{
-							char *con_me = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) );
-							strcpy( con_me, me->nickname );
-							push( users->active_user, con_me );
+							int ack_reg;
+							ack_reg = checkin( users, msg.hdr.sender );
 
-							//set user list to send
+							//IF THE USER HAS BEEN REGISTERED
+							if( ack_reg == true )
+								{
+									me = connecting( users, msg.hdr.sender );
+									if( me != NULL ) //if the user is logged on
+										{
+											me->fd_online = c_fd;
+											push( users->active_user, me );
+
+											//SET USER LIST TO SEND
+											sendUlist( users->active_user, &msg, me, buff ); //set the data in this function
+											setHeader( &msg.hdr, OP_OK, "ChattyServer" );
+								sleep( 2 );
+
+											sendHeader( c_fd, &msg.hdr );
+											sendData( c_fd, &msg.data );
+
+											free( buff );
+										}
+									//IF THE USER IS NOT LOGGED ON
+									else
+										{
+											setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+											sendHeader( c_fd, &msg.hdr );
+
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+
+											STOP = true;
+										}
+								}
+							//IF THE USER HAS NOT BEEN REGISTERED
+							else
+								{
+									(ack_reg == false) ? setHeader( &msg.hdr, OP_FAIL, "ChattyServer" ) : setHeader( &msg.hdr, OP_NICK_ALREADY, "ChattyServer" );
+									sendHeader( c_fd, &msg.hdr );
+
+									pthread_mutex_lock( &chattyStats.statLock );
+										chattyStats.nerrors += 1;
+									pthread_mutex_unlock( &chattyStats.statLock );
+
+									STOP = true;
+								}
+						}break;
+		//=============================================================================================//
+		//=============================================================================================//
+					case CONNECT_OP :
+						{
+							me = connecting( users, msg.hdr.sender );
+							if( me != NULL ) //if the user is logged on
+								{
+									if( users->active_user == NULL )
+										{
+											setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+											sendHeader( c_fd, &msg.hdr );
+
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+
+											STOP = true;
+										}
+									else
+										{
+											//CHECK IF USER IS ALREADY ONLINE
+											if( me->fd_online == -1 ) //if offline
+												{
+													me->fd_online = c_fd;
+													push( users->active_user, me );
+
+													//SET USER LIST TO SEND
+													sendUlist( users->active_user, &msg, me, buff ); //set the data in this function
+													setHeader( &msg.hdr, OP_OK, "ChattyServer" );
+
+													sendHeader( c_fd, &msg.hdr );
+													sendData( c_fd, &msg.data );
+
+													free( buff );
+												}
+											else //if online
+												{
+													setHeader( &msg.hdr, OP_ALREADY_ONLINE, "ChattyServer" );
+													sendHeader( c_fd, &msg.hdr );
+
+													pthread_mutex_lock( &chattyStats.statLock );
+														chattyStats.nerrors += 1;
+													pthread_mutex_unlock( &chattyStats.statLock );
+
+													STOP = true;
+												}
+										}
+								}
+							else
+								{
+									setHeader( &msg.hdr, OP_NICK_UNKNOWN, "ChattyServer" );
+									sendHeader( c_fd, &msg.hdr );
+
+									pthread_mutex_lock( &chattyStats.statLock );
+										chattyStats.nerrors += 1;
+									pthread_mutex_unlock( &chattyStats.statLock );
+
+									STOP = true;
+								}
+						}break;
+		//=============================================================================================//
+		//=============================================================================================//
+					case USRLIST_OP :
+						{
+							me = connecting( users, msg.hdr.sender );
+
+							//SET USER LIST TO SEND
 							sendUlist( users->active_user, &msg, me, buff ); //set the data in this function
-
 							setHeader( &msg.hdr, OP_OK, "ChattyServer" );
 
 							sendHeader( c_fd, &msg.hdr );
 							sendData( c_fd, &msg.data );
 
 							free( buff );
-						}
-						else //if the user is not logged on
+						}break;
+		//=============================================================================================//
+		//=============================================================================================//
+					case DISCONNECT_OP :
 						{
-							setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-							sendHeader( c_fd, &msg.hdr );
-							STOP = true;
-						}
-					}
-					else //if the user has not been registered
-					{
-						if( ack_reg == false )
-						{
-							setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-						}
-						else
-						{
-							setHeader( &msg.hdr, OP_NICK_ALREADY, "ChattyServer" );
-						}
-
-						sendHeader( c_fd, &msg.hdr );
-						STOP = true;
-					}
-				}break;
-
-	/*-----------------------------------------*/
-
-			case CONNECT_OP :
-				{
-					me = connecting( users, msg.hdr.sender );
-					if( me != NULL ) //if the user is logged on
-					{
-						char *con_me = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) );
-						strcpy( con_me, me->nickname );
-
-						if( users->active_user == NULL )
-						{
-							setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-							sendHeader( c_fd, &msg.hdr );
-							STOP = true;
-						}
-						else
-						{
-							//check if already online
-							node_t *tmp_n = users->active_user->head;
-							user_t *tmp_u = NULL;
-							int l_stop = 0;
-
-							while( tmp_n != NULL && !l_stop )
-							{
-								tmp_u = tmp_n->ptr;
-								if( tmp_u != NULL )
+							me = connecting( users, msg.hdr.sender );
+							if( me != NULL )
 								{
-									( strcmp((char *)tmp_u, me->nickname) == 0 ) ? ( l_stop = 1 ) : ( tmp_n = tmp_n->next );
+									me->fd_online = -1;
+									node_t 	*rm = users->active_user->head;
+									user_t 	*u_rm = NULL;
+									if( rm != NULL )
+										{
+											u_rm = rm->ptr;
+										}
+
+									//PUT USER OFFLINE
+									while( rm != users->active_user->tail && strcmp( u_rm->nickname, me->nickname ) != 0 )
+										{
+											rm = rm->next;
+											u_rm = rm->ptr;
+										}
+
+									int ack = 0;
+									if( rm != NULL )
+										{
+											ack = remove_node( users->active_user, rm );
+										}
+									if( ack == 1 )
+										{
+											setHeader( &msg.hdr, OP_OK, "ChattyServer" );
+											STOP = true;
+										}
+									else
+										{
+											setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+										}
 								}
-								else
+							else
 								{
-									tmp_n = NULL;
+									setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+
+									pthread_mutex_lock( &chattyStats.statLock );
+										chattyStats.nerrors += 1;
+									pthread_mutex_unlock( &chattyStats.statLock );
 								}
-							}
 
-							if( !l_stop )//if not online
-							{
-								push( users->active_user, con_me );
-
-								//set user list to send
-								sendUlist( users->active_user, &msg, me, buff ); //set the data in this function
-								setHeader( &msg.hdr, OP_OK, "ChattyServer" );
-
-								sendHeader( c_fd, &msg.hdr );
-								sendData( c_fd, &msg.data );
-
-								free( buff );
-							}
-							else//if online
-							{
-								setHeader( &msg.hdr, OP_ALREADY_ONLINE, "ChattyServer" );
-								sendHeader( c_fd, &msg.hdr );
-
-								STOP = true;
-							}
-						}
-					}
-					else
-					{
-						setHeader( &msg.hdr, OP_NICK_UNKNOWN, "ChattyServer" );
-						sendHeader( c_fd, &msg.hdr );
-
-						STOP = true;
-					}
-				}break;
-
-	/*-----------------------------------------*/
-
-			case USRLIST_OP :
-				{
-					//set user list to send
-					sendUlist( users->active_user, &msg, me, buff ); //set the data in this function
-
-					setHeader( &msg.hdr, OP_OK, "ChattyServer" );
-
-					sendHeader( c_fd, &msg.hdr );
-					sendData( c_fd, &msg.data );
-
-					free( buff );
-
-				}break;
-
-	/*-----------------------------------------*/
-
-			case DISCONNECT_OP :
-				{
-					node_t *rm = users->active_user->head;
-					char *u_rm = rm->ptr;
-
-					while( rm != NULL && strcmp(u_rm, me->nickname) != 0 )
-					{
-						rm = rm->next;
-						u_rm = rm->ptr;
-					}
-
-					int ack = remove_node( users->active_user, rm );
-					if( ack == 1 )
-					{
-						setHeader( &msg.hdr, OP_OK, "ChattyServer" );
-						STOP = true;
-					}
-					else
-					{
-						setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-					}
-
-					sendHeader( c_fd, &msg.hdr );
-				}break;
-
-	/*-----------------------------------------*/
-
-			case UNREGISTER_OP :
-				{
-					node_t *rm_n = users->active_user->head;
-					char *u_rm = rm_n->ptr;
-
-					//put user offline
-					while( rm_n != NULL && strcmp(u_rm, me->nickname) != 0 )
-					{
-						rm_n = rm_n->next;
-						u_rm = rm_n->ptr;
-					}
-
-					int ack = remove_node( users->active_user, rm_n );
-					if( ack == 1 )
-					{
-						int d_ack = delete( users, me->nickname );
-						d_ack == true ? setHeader( &msg.hdr, OP_OK, "ChattyServer" ) : setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-
-						STOP = true;
-					}
-					else
-					{
-						setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-					}
-
-					sendHeader( c_fd, &msg.hdr );
-				}break;
-
-	/*-----------------------------------------*/
-
-			case CREATEGROUP_OP :
-				{
-					char *gname = msg.data.hdr.receiver;
-					node_t *node = users->groups->head;
-					group_chat_t *group = NULL;
-					int lstop = 0;
-
-					while( node != NULL && !lstop )
-					{
-						group = node->ptr;
-						if( group != NULL )
+							sendHeader( c_fd, &msg.hdr );
+						}break;
+		//=============================================================================================//
+		//=============================================================================================//
+					case UNREGISTER_OP :
 						{
-							( strcmp(group->chat_title, gname) == 0 ) ? ( lstop = 1 ) : ( node = node->next );
-						}
-						else
-						{
-							node = NULL;
-						}
-					}
+							me = connecting( users, msg.hdr.sender );
+							if( me != NULL )
+								{
+									node_t *rm_n = users->active_user->head;
+									user_t *u_rm = rm_n->ptr;
 
-					if( !lstop && me != NULL )
-					{
-						group_chat_t *new_group = NULL;
-						if( (new_group = (group_chat_t *)malloc( sizeof( group_chat_t ) )) == NULL )
-						{
-							setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-						}
-						else
-						{
-							new_group->participants = initialQueue();
-							new_group->messages = initialQueue();
+									//PUT USER OFFLINE
+									while( rm_n != NULL && strcmp(u_rm->nickname, me->nickname) != 0 )
+										{
+											rm_n = rm_n->next;
+											u_rm = rm_n->ptr;
+										}
 
-							if( new_group->participants != NULL && new_group->messages != NULL )
-							{
-								char *tmp_u = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) );
+									int ack = remove_node( users->active_user, rm_n );
+									if( ack == 1 )
+										{
+											int d_ack = delete( users, me->nickname );
+											if( d_ack == true )
+												{
+													setHeader( &msg.hdr, OP_OK, "ChattyServer" );
+												}
+											else
+												{
+													setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
 
-								strcpy( new_group->chat_title, gname ); //set group name
-								strcpy( tmp_u, me->nickname ); //copy user name
+													pthread_mutex_lock( &chattyStats.statLock );
+														chattyStats.nerrors += 1;
+													pthread_mutex_unlock( &chattyStats.statLock );
+												}
 
-								push( new_group->participants, tmp_u ); //enter first user in the group
+											STOP = true;
+										}
+									else
+										{
+											setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
 
-								push( users->groups, new_group );
-
-								setHeader( &msg.hdr, OP_OK, "ChattyServer" );
-							}
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+										}
+								}
 							else
-							{
-								free( new_group );
-								setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-							}
-						}
-					}
-					else
-					{
-						if( lstop )
+								{
+									setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+
+									pthread_mutex_lock( &chattyStats.statLock );
+										chattyStats.nerrors += 1;
+									pthread_mutex_unlock( &chattyStats.statLock );
+								}
+
+							sendHeader( c_fd, &msg.hdr );
+						}break;
+		//=============================================================================================//
+		//=============================================================================================//
+					case CREATEGROUP_OP :
 						{
-							setHeader( &msg.hdr, OP_NICK_ALREADY, "ChattyServer" );
-						}
-						else
-						{
-							setHeader( &msg.hdr, OP_NICK_UNKNOWN, "ChattyServer" );
-							STOP = true;
-						}
-					}
+							char 				*gname = msg.data.hdr.receiver;
+							node_t 			*node = users->groups->head;
+							group_chat_t 	*group = NULL;
+							int 				lstop = 0;
 
-					sendHeader( c_fd, &msg.hdr );
-				}break;
+							me = connecting( users, msg.hdr.sender );
+							while( (node != NULL) && !lstop )
+								{
+									group = node->ptr;
+									if( group != NULL )
+										{
+											( strcmp(group->chat_title, gname) == 0 ) ? ( lstop = 1 ) : ( node = node->next );
+										}
+									else
+										{
+											node = NULL;
+										}
+								}
 
-	/*-----------------------------------------*/
+							if( !lstop && (me != NULL) )
+								{
+									group_chat_t *new_group = NULL;
+									if( (new_group = (group_chat_t *)malloc( sizeof( group_chat_t ) )) == NULL )
+										{
+											setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
 
-			case ADDGROUP_OP :
-				{
-					char *gname = msg.data.hdr.receiver;
-					node_t *gnode = users->groups->head;
-					group_chat_t *group = NULL;
-					int l_stop = 0;
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+										}
+									else
+										{
+											new_group->participants = initialQueue();
+											new_group->messages = initialQueue();
 
-					while( gnode != NULL && !l_stop )
-					{
-						group = gnode->ptr;
+											if( new_group->participants != NULL && new_group->messages != NULL )
+												{
+													char *tmp_u = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) );
 
-						if( group != NULL )
-						{
-							( strcmp( group->chat_title, gname ) == 0 ) ? ( l_stop = 1 ) : ( gnode = gnode->next );
-						}
-						else
-						{
-							gnode = NULL;
-						}
-					}
+													strcpy( new_group->chat_title, gname ); //set group name
+													strcpy( tmp_u, me->nickname ); //copy user name
 
-					if( l_stop )
-					{
-						node_t *unode = group->participants->head;
-						user_t *usr = NULL;
-						int lstop = 0;
+													push( new_group->participants, tmp_u ); //enter first user in the group
+													push( users->groups, new_group );
 
-						while( unode != NULL && !lstop )
-						{
-							usr = unode->ptr;
-							if( usr != NULL )
-							{
-								( strcmp( usr, me->nickname ) == 0 ) ? ( lstop = 1 ) : ( unode = unode->next );
-							}
+													setHeader( &msg.hdr, OP_OK, "ChattyServer" );
+
+													push( users->active_user, new_group );
+												}
+											else
+												{
+													free( new_group );
+													setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+
+													pthread_mutex_lock( &chattyStats.statLock );
+														chattyStats.nerrors += 1;
+													pthread_mutex_unlock( &chattyStats.statLock );
+												}
+										}
+								}
 							else
-							{
-								unode = NULL;
-							}
-						}
-						if( !lstop )
+								{
+									if( lstop )
+										{
+											setHeader( &msg.hdr, OP_NICK_ALREADY, "ChattyServer" );
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+										}
+									else
+										{
+											setHeader( &msg.hdr, OP_NICK_UNKNOWN, "ChattyServer" );
+
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+
+											STOP = true;
+										}
+								}
+							sendHeader( c_fd, &msg.hdr );
+						}break;
+		//=============================================================================================//
+		//=============================================================================================//
+					case ADDGROUP_OP :
 						{
-							char *new_p = NULL;
-							if( (new_p = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) )) != NULL )
-							{
-								push( group->participants, new_p );
-								setHeader( &msg.hdr, OP_OK, "ChattyServer" );
-							}
+							char 				*gname = msg.data.hdr.receiver;
+							node_t 			*gnode = users->groups->head;
+							group_chat_t 	*group = NULL;
+							int 				l_stop = 0;
+
+							me = connecting( users, msg.hdr.sender );
+							while( gnode != NULL && !l_stop )
+								{
+									group = gnode->ptr;
+
+									if( group != NULL )
+										{
+											( strcmp( group->chat_title, gname ) == 0 ) ? ( l_stop = 1 ) : ( gnode = gnode->next );
+										}
+									else
+										{
+											gnode = NULL;
+										}
+								}
+
+							if( l_stop && (me != NULL) )
+								{
+									node_t 	*unode = group->participants->head;
+									user_t 	*usr = NULL;
+									int 	lstop = 0;
+
+									while( unode != NULL && !lstop )
+										{
+											usr = unode->ptr;
+											if( usr != NULL )
+												{
+													( strcmp( usr, me->nickname ) == 0 ) ? ( lstop = 1 ) : ( unode = unode->next );
+												}
+											else
+												{
+													unode = NULL;
+												}
+										}
+									if( !lstop )
+										{
+											char *new_p = NULL;
+											if( (new_p = (char *)malloc( MAX_NAME_LENGTH * sizeof( char ) )) != NULL )
+												{
+													push( group->participants, new_p );
+													setHeader( &msg.hdr, OP_OK, "ChattyServer" );
+												}
+											else
+												{
+													setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+
+													pthread_mutex_lock( &chattyStats.statLock );
+														chattyStats.nerrors += 1;
+													pthread_mutex_unlock( &chattyStats.statLock );
+												}
+										}
+									else
+										{
+											setHeader( &msg.hdr, OP_NICK_AVAILABLE, "ChattyServer" );
+
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+										}
+								}
 							else
-							{
-								setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
-							}
-						}
-						else
+								{
+									(me != NULL) ? setHeader( &msg.hdr, OP_GROUP_UNKNOWN, "ChattyServer" ) : setHeader( &msg.hdr, OP_NICK_AVAILABLE, "ChattyServer" );
+
+									pthread_mutex_lock( &chattyStats.statLock );
+										chattyStats.nerrors += 1;
+									pthread_mutex_unlock( &chattyStats.statLock );
+								}
+							sendHeader( c_fd, &msg.hdr );
+						}break;
+		//=============================================================================================//
+		//=============================================================================================//
+					case DELGROUP_OP :
 						{
-							setHeader( &msg.hdr, OP_NICK_AVAILABLE, "ChattyServer" );
-						}
-					}
-					else
-					{
-						setHeader( &msg.hdr, OP_GROUP_UNKNOWN, "ChattyServer" );
-					}
+							char 				*gname = msg.data.hdr.receiver;
+							node_t 			*gnode = users->groups->head;
+							node_t			*anode = users->active_user->head;
+							group_chat_t 	*group = NULL;
 
-					sendHeader( c_fd, &msg.hdr );
-				}break;
+							int 				lstop = 0;
 
-	/*-----------------------------------------*/
+							me = connecting( users, msg.hdr.sender );
 
-			case DELGROUP_OP :
-				{
-					char *gname = msg.data.hdr.receiver;
-					node_t *node = users->groups->head;
+							while( gnode != NULL && !lstop && me != NULL )
+								{
+									group = gnode->ptr;
+									if( group != NULL )
+										{
+											( strcmp( group->chat_title, gname ) == 0 ) ? ( lstop = 1 ) : ( gnode = gnode->next );
+										}
+									else
+										{
+											gnode = NULL;
+										}
+								}
 
-					group_chat_t *group = NULL;
-					int lstop = 0;
-					while( node != NULL && !lstop )
-					{
-						group = node->ptr;
-						if( group != NULL )
+
+							if( lstop )
+								{
+									while( anode != NULL  )
+										{
+											group = anode->ptr;
+											if( group != NULL )
+												{
+													if( strcmp( group->chat_title, gname ) == 0 )
+														{
+															remove_node( users->active_user, anode );
+															break;
+														}
+													else
+														{
+															anode = anode->next;
+														}
+												}
+											else
+												{
+													anode = NULL;
+												}
+										}
+									destroy_queue( group->messages );
+									destroy_queue( group->participants );
+
+									if( remove_node( users->groups, gnode ) == 1 )
+										{
+											setHeader( &msg.hdr, OP_OK, "ChattyServer" );
+										}
+									else
+										{
+											setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );
+
+											pthread_mutex_lock( &chattyStats.statLock );
+												chattyStats.nerrors += 1;
+											pthread_mutex_unlock( &chattyStats.statLock );
+										}
+								}
+							else
+								{
+									(me != NULL) ? setHeader( &msg.hdr, OP_GROUP_UNKNOWN, "ChattyServer" ) : setHeader( &msg.hdr, OP_NICK_AVAILABLE, "ChattyServer" );
+
+									pthread_mutex_lock( &chattyStats.statLock );
+										chattyStats.nerrors += 1;
+									pthread_mutex_unlock( &chattyStats.statLock );
+								}
+							sendHeader( c_fd, &msg.hdr );
+						}break;
+		//=============================================================================================//
+		//=============================================================================================//
+					default :
 						{
-							( strcmp( group->chat_title, gname ) == 0 ) ? ( lstop = 1 ) : ( node = node->next );
-						}
-						else
-						{
-							node = NULL;
-						}
-					}
+							setHeader( &msg.hdr, OP_UNKNOWN, "ChattyServer" );
+							sendHeader( c_fd, &msg.hdr );
 
-					if( lstop )
-					{
-						destroy_queue( group->messages );
-						destroy_queue( group->participants );
+							pthread_mutex_lock( &chattyStats.statLock );
+								chattyStats.nerrors += 1;
+							pthread_mutex_unlock( &chattyStats.statLock );
+						}break;
 
-						(remove_node( users->groups, node ) == 1 ) ? setHeader( &msg.hdr, OP_OK, "ChattyServer" ) : setHeader( &msg.hdr, OP_FAIL, "ChattyServer" );;
-					}
-					else
-					{
-						setHeader( &msg.hdr, OP_GROUP_UNKNOWN, "ChattyServer" );
-					}
-
-					sendHeader( c_fd, &msg.hdr );
-
-				}break;
-
-	/*-----------------------------------------*/
-
-			default :
-				{
-					printf("Unknown Operation\n");
-				}break;
-
-	/*-----------------------------------------*/
-		}//END SWITCH
-
-	}while( !STOP );
+		//=============================================================================================//
+				}//END SWITCH
+		}//END ELSE READMSG()
 
 
+	if( msg.data.buf != NULL )
+	{
+		free( msg.data.buf );
+	}
 
-
-
-	printf( "\n--------------------------------------\n" );
-	printf( "Connection %d has been stopped", c_fd );
-	printf( "\n--------------------------------------\n\n" );
-
-	close( c_fd );
-
+	if( STOP == true )
+		{
+			pthread_mutex_lock( &poll_l );
+				con[i].fd = -1;
+				close( c_fd );
+			pthread_mutex_unlock( &poll_l );
+		}
+	else
+		{
+			pthread_mutex_lock( &poll_l );
+				con[i].fd = c_fd;
+				con[i].revents = 0;
+			pthread_mutex_unlock( &poll_l );
+		}
 }
 
+
+
+/**
+ *
+ */
+void sig_handler( int sig )
+{
+	switch( sig )
+		{
+			case SIGPIPE:
+				{
+					signal( sig, SIG_IGN );
+				}break;
+
+			case SIGINT:
+			case SIGQUIT:
+			case SIGTERM:
+				{
+					signal( sig, SIG_IGN );
+					keepRUN = 0;
+				}break;
+
+			case SIGUSR1:
+				{
+
+				}
+		}
+}
 
 
 
 /******************************************************************************
                                     MAIN
 ******************************************************************************/
-int main(int argc, char *argv[])
+int main( int argc, char *argv[] )
 {
-
-    /** VARIABLES **/
-    struct s_conf myconf;
-    arg_con con;
-    hashtable_t *users;
-
-
-    //gestione esecuzione server
-    if (argc == 1)
-    {
-        usage( argv[0] );
-        return -1;
-    }
-    char opt;
-    while( (opt = getopt( argc, argv, "f" )) != -1 )
-    {
-        switch( opt )
-        {
-            case 'f' :
-            {
-            	pars( argv[2], &myconf );
-            }
-                break;
-
-            default:
-            {
-            	usage( argv[0] );
-            };
-        }
-    }
-
-    //start thread to print statics
-    pthread_t stat_printer;
-    pthread_create( &stat_printer, NULL, (void *)print_statistic, (void *)myconf.StatFileName );
+    // >> VARIABLES DECLARATION << //
+	struct sigaction 		s;						//signal to manage signals
+	struct sockaddr_un 	server; 				//address server socket
+	struct s_conf 			myconf; 				//server configuration fields
+	struct pollfd 			*fds;					//struct to save the file descriptors to check them
+	rq_arg 					reqArg;				//connections handler fields
+	hashtable_t 			*users = NULL; 	//users list
+	threadpool_t 			*pool = NULL;		//thread pool of request handler worker
+	int 						listener = 0;		//file descriptor of listener socket
+	int 						new_client = 0;	//file descriptor of communication socket
+	int						msec = 0;			//number to define the timeout of poll (in milliseconds)
+	int						nfds = 0;			//number of file descriptors to check
+	char 						opt = '\0';			//char to verify options of server
 
 
-    //init server
-    configServer( &myconf );
-    users = initTable( _MAX_CONN );
-    threadpool_t *pool = pool_creation( );
-
-
-    //TEST
-
-    unlink(SOCKNAME);
-
-    int s_fd, c_fd;
-
-
-    struct sockaddr_un se;
-    strncpy( se.sun_path, SOCKNAME, UNIX_PATH_MAX );
-    se.sun_family = AF_UNIX;
-
-    s_fd = socket( AF_UNIX, SOCK_STREAM, 0 );
-    bind( s_fd, (struct sockaddr *)&se, sizeof(se) );
-    listen( s_fd, _MAX_CONN );
-
-    while( true )
-    {
-    	c_fd = accept( s_fd, NULL, 0 );
-    	if( c_fd != -1 )
-    	{
-    		con.con_fd = c_fd;
-    		con.users = users;
-    		threadpool_add( pool, mng_conn, &con );
-    	}
-    	else
-    	{
-    		fprintf( stderr, "ERROR ESTABLISHING CONNECTION\n");
-    		continue;
-    	}
-
-    }
+   // >> CONFIGURATION MANAGEMENT << //
+	if (argc == 1)
+	{
+		usage( argv[0] );
+		return -1;
+	}
+	while( (opt = getopt( argc, argv, "f" )) != -1 )
+	{
+		switch( opt )
+			{
+				case 'f' :
+					{
+						pars( argv[2], &myconf );
+					}break;
+				default:
+					{
+						usage( argv[0] );
+						exit( EXIT_FAILURE );
+					};
+			}
+	}
 
 
 
+   // >> SERVER INIT << //
+	configServer( &myconf );
+	users = initTable( _MAX_CONN );
+	pool = pool_creation( );
+	nfds = _MAX_CONN + 1; //1 because there is the listener fd
 
-//    hashtable_t *users = initTable( _MAX_CONN );
 
-//    users->users[0].user = malloc( sizeof(user_t) );
-//    users->users[0].user->key = 1995;
-//    users->users[0].user->nickname = (char *)malloc( 10 *sizeof( char));
-//    strcpy( users->users[0].user->nickname, "luca" );
-//    printf( "%s - %d\n", users->users[0].user->nickname, users->users[0].user->key );
-//    insert( users, "luca" );
-////
-//    insert( users, "lucia" );
-//    insert( users, "roby" );
-//    insert( users, "betta" );
-//    insert( users, "luciano" );
-//    insert( users, "licia" );
-
-//
-//    printf( "puppa\n" );
-//
-//
-//	user_t *b = search( users, "betta" );
-//	printf( "%s - %d\n", b->nickname, b->key );
-//
-//	b = search( users, "luca" );
-//	printf( "%s - %d\n", b->nickname, b->key );
-//
-//	b = search( users, "roby" );
-//	printf( "%s - %d\n", b->nickname, b->key );
-//
-//	b = search( users, "Fuffy" );
-//	if( b != NULL )
-//		printf( "%s - %d\n", b->nickname, b->key );
-//	else
-//		printf( "puppa" );
-//
-//	b = search( users, "lucia" );
-//	printf( "%s - %d\n", b->nickname, b->key );
-//
-//	int c = removing( users, "luca" );
-//	c = removing( users, "lucia" );
-//	c = removing( users, "lucia" );
-
-//	if( c == 1 )
-//	{
-//		b = search( users, "lucia" );
-//		printf( "%s - %d\n", b->nickname, b->key );
-//	}
-//	else
-//	{
-//		printf( "%d!\n", c );
-//	}
-
-//	b = search( users, "lucia" );
-//	printf( "%s - %d\n", b->nickname, b->key );
+	// >> ALLOCATION ARRAY OF FDs << //
+	if( (fds = ( struct pollfd * )malloc( nfds * sizeof( struct pollfd ) )) == NULL )
+		{
+			perror( "malloc:" );
+			pthread_mutex_lock( &chattyStats.statLock );
+				chattyStats.nerrors += 1;
+			pthread_mutex_unlock( &chattyStats.statLock );
+			exit( -1 );
+		}
 
 
 
-//	message_t *msg = NULL;
-//	for( int i = 0; i < 30; i++ )
-//	{
-//		msg = (message_t *)malloc( sizeof( message_t ) );
-//		setHeader( &msg->hdr, 200+i, "luca" );
-//		char *tmp = (char *)malloc( 250 * sizeof( char ) );
-//		strcpy( tmp, "CIAO MAMMA GUARDA COME MI DIVERTO" );
-//		setData( &msg->data, b->nickname, tmp, strlen(tmp)+1 );
-//		push( b->msg_hist, msg );
-//	}
-//
-//	msg = b->msg_hist->tail->ptr;
-//	printf( "%d\n", msg->hdr.op );
-//	printf( "%s\n", msg->data.buf );
-//    int r = 0;
-//    while( r != 3 )
-//    {
-//    	sleep( 10 );
-//    	r++;
-//    }
+   // >> SET SIGNAL HANDLER << //
+	memset( &s, 0, sizeof( s ) );
+
+	s.sa_handler = &sig_handler;
+	sigfillset(&s.sa_mask);
+
+	//CATCH SIGPIPE
+	if( sigaction(SIGPIPE, &s, NULL) == -1 )
+		{
+			perror( "sigaction SIGPIPE" );
+
+			pthread_mutex_lock( &chattyStats.statLock );
+				chattyStats.nerrors += 1;
+			pthread_mutex_unlock( &chattyStats.statLock );
+		}
+	//CATCH SIGINT
+	if( sigaction(SIGINT, &s, NULL) == -1 )
+		{
+			perror( "sigaction SIGINT" );
+
+			pthread_mutex_lock( &chattyStats.statLock );
+				chattyStats.nerrors += 1;
+			pthread_mutex_unlock( &chattyStats.statLock );
+		}
+	//CATCH SIGTERM
+	if( sigaction(SIGTERM, &s, NULL) == -1 )
+		{
+			perror( "sigaction SIGTERM" );
+
+			pthread_mutex_lock( &chattyStats.statLock );
+				chattyStats.nerrors += 1;
+			pthread_mutex_unlock( &chattyStats.statLock );
+		}
+	//CATCH SIGQUIT
+	if( sigaction(SIGQUIT, &s, NULL) == -1 )
+		{
+			perror( "sigaction SIGQUIT" );
+
+			pthread_mutex_lock( &chattyStats.statLock );
+				chattyStats.nerrors += 1;
+			pthread_mutex_unlock( &chattyStats.statLock );
+		}
+	//CATCH SIGUSR1
+	if( sigaction(SIGUSR1, &s, NULL) == -1 )
+		{
+			perror( "sigaction SIGUSR1" );
+
+			pthread_mutex_lock( &chattyStats.statLock );
+				chattyStats.nerrors += 1;
+			pthread_mutex_unlock( &chattyStats.statLock );
+		}
 
 
-//	printf( "\n\n\n\n" );
-//    for( int i = 0; i < _MAX_CONN; i++ )
-//	{
-//    	user_t *tmp = NULL;
-//		if( users->users[i].user != NULL )
-//		{
-//			 printf( "%s\n", users->users[i].user->nickname );
-//		}
-//		if( users->users[i].collision != NULL && users->users[i].collision->head != NULL )
-//		{
-//			node_t *nt = users->users[i].collision->head;
-//			while( nt != NULL )
-//			{
-//				tmp = nt->ptr;
-//				printf( "\t%s\n", tmp->nickname );
-//				nt = nt->next;
-//			}
-//		}
-//	}
+
+	unlink( SOCKNAME ); //delete name of socket from filesystem
+
+   // >> SET SOCKET ADDRESS DOMAIN << //
+	strncpy( server.sun_path, SOCKNAME, UNIX_PATH_MAX );
+	server.sun_family = AF_UNIX;
+
+	// >> BIND SOCKET NAME << //
+	listener = socket( AF_UNIX, SOCK_STREAM, 0 );
+
+
+ REOPEN_LISTENER: //label goto
+	bind( listener, (struct sockaddr *)&server, sizeof(server) );
+
+	// >> ZEROING ARRAY OF FDs << //
+	for( int tfd = 0; tfd < nfds; tfd++ )
+		{
+			fds[tfd].fd = -1;
+			fds[tfd].events = 0;
+			fds[tfd].revents = 0x000;
+		}
+
+   // >> START LISTEN SOCKET << //
+	listen( listener, _MAX_CONN );
+	//SET LISTENER IN POLL STRUCTURE
+	fds[nfds-1].fd = listener;
+	fds[nfds-1].events = POLLIN;
+	fds[nfds-1].revents = 0x000;
+
+	msec = 2; //time for poll timeout
+
+	// >> START MAIN (INFINITE) LOOP << //
+	while( true )
+	{
+		//SET POLL STRUCTURES
+		if( poll( fds, nfds, msec ) == -1 && keepRUN == 1 )
+			{
+				pthread_mutex_lock( &chattyStats.statLock );
+					chattyStats.nerrors += 1;
+				pthread_mutex_unlock( &chattyStats.statLock );
+
+				perror( "poll" );
+				exit( -1 );
+			}
+
+		//LOOP TO MONITOR ALL SOCKETS
+		for( int tfd = 0; tfd < nfds; tfd++ )
+			{
+				//SET 'revent' OF LISTER TO SHUTDOWN SERVER
+				if( keepRUN != 1 )
+					{
+						fds[nfds-1].revents = 0x011;
+					}
+				//SOCKET IN USE TO MANAGE REQUESTS
+				if( fds[tfd].fd == -2 )
+					{
+						continue;
+					}
+				//SOCKET CLOSED WITH ERROR
+				if( fds[tfd].revents == 0x011 || fds[tfd].revents == 0x010 )
+					{
+						//SOCKET CLOSED IS LISTENER
+						if( fds[tfd].fd == listener )
+							{
+								char r = '\0';
+								if( keepRUN == 1 ) //socket closed with error
+								{
+									pthread_mutex_lock( &chattyStats.statLock );
+										chattyStats.nerrors += 1;
+									pthread_mutex_unlock( &chattyStats.statLock );
+
+									fprintf( stderr, "\n'listen': Listener Socket was unexpectedly closed.\n" );
+									fprintf( stdout, "Do you want to restart the socket without losing data? [Y|N]\n" );
+									scanf( "%c", &r );
+								}
+								else //socket closed from SIGINT
+								{
+									r = 'N';
+								}
+								if( r == 'N' || r == 'n' ) //shutdown server
+									{
+										printf( "\nShutdown service .............................\n" );
+
+										//DESTROY THREADPOOL
+										threadpool_destroy( pool, false );
+										printf( "..............................................\n" );
+
+										//DESTROY USERS LIST
+										destroy_queue( users->active_user );
+										destroy_queue( users->groups );
+										for( int i = 0; i < _MAX_CONN; i++ )
+											{
+												printf( ".............................................." );
+												if( users->users[i].user != NULL )
+													{
+														clear_chat( users->users[i].user->chats );
+														free( users->users[i].user );
+													}
+
+												destroy_queue( users->users[i].collision );
+											}
+										free( users->users );
+										free( users );
+
+										free( fds );
+
+										printf( "\n\nBYE!\n\n" );
+										exit( EXIT_SUCCESS );
+									}
+								else //try to restart the listener socket
+									{
+										fflush( stdout );
+										fflush( stdin );
+										fprintf( stderr, "Restart listener\n" );
+
+										//CLOSE ALL OPEN SOCKETS
+										for( int i = 0; i < _MAX_CONN; i++ )
+											{
+												//THE SOCKET IS IN USE
+												if( i != -1 )
+													{
+														close( fds[i].fd );
+													}
+											}
+										goto REOPEN_LISTENER;
+									}
+							}
+						//CONNECTION WITH THE CLIENT WAS ABORTED
+						else
+							{
+								node_t *ntmp = users->active_user->head;
+								user_t *utmp = NULL;
+								if( ntmp != NULL )
+									{
+										utmp = ntmp->ptr;
+									}
+
+								//PUT USER OFFLINE
+								while( (ntmp != users->active_user->tail) && (utmp->fd_online != fds[tfd].fd) )
+									{
+										ntmp = ntmp->next;
+										utmp = ntmp->ptr;
+									}
+
+								int ack = 0;
+								if( ntmp != NULL && ntmp->ptr != NULL )
+									{
+										ack = remove_node( users->active_user, ntmp );
+									}
+
+								if( ack == 1 )
+									{
+										user_t *tmp = connecting( users, utmp->nickname );
+										tmp->fd_online = -1;
+									}
+								pthread_mutex_lock( &chattyStats.statLock );
+									chattyStats.nerrors += 1;
+								pthread_mutex_unlock( &chattyStats.statLock );
+							}
+						fds[tfd].fd = -1;
+						fds[tfd].events = 0;
+						continue;
+					}
+
+				//NO EVENTS FOR TFD FD
+				if( fds[tfd].revents == 0x000 )
+					{
+						continue;
+					}
+
+				//NEW CLIENT TRIES TO CONNECT
+				if( fds[tfd].fd == listener )
+					{
+						//SET NON-BLOCKING LISTENER SOCKET
+						int flags = fcntl( listener, F_GETFL, 0 );
+						fcntl( listener, F_SETFL, flags | O_NONBLOCK );
+
+						new_client = accept( listener, NULL, NULL );
+
+						//THE CONNECTION FROM THE NEW CLIENT HAS NOT BEEN ACCEPTED
+						if( new_client == -1 )
+						{
+							pthread_mutex_lock( &chattyStats.statLock );
+								chattyStats.nerrors += 1;
+							pthread_mutex_unlock( &chattyStats.statLock );
+
+							perror( "accept" );
+							continue;
+						}
+
+						//THE CONNECTION FROM THE NEW CLIENT HAS BEEN ACCEPTED
+						else
+							{
+								//FIND FREE FD FIELD FOR A NEW CONNECTION
+								int i = 0;
+								while( (fds[i].fd != -1) && (i < _MAX_CONN) )
+									{
+										i++;
+									}
+								//FD IS FREE AND CAN ACCEPT A CONNECTION
+								if( fds[i].fd == -1 )
+									{
+										fds[i].fd = new_client;
+										fds[i].events = POLLIN;
+
+										int flags = fcntl( fds[i].fd, F_GETFL, 0 );
+										if( fcntl( fds[i].fd, F_SETFL, flags | O_NONBLOCK ) == -1 )
+											{
+												perror( "fcntl" );
+												continue;
+											}
+									}
+								//ALL FD ARE ACTIVE
+								else
+									{
+										message_t errmsg;
+										setHeader( &errmsg.hdr, OP_TOO_MANY_CONN, "ChattyServer" );
+										sendHeader( new_client, &errmsg.hdr );
+
+										close( new_client );
+										continue;
+									}
+							}
+					}
+				//A CLIENT SENT A REQUEST
+				else
+					{
+						//SET ARGS TO PASS AT REQUESTS HANDLER
+						pthread_mutex_lock( &poll_l );
+							reqArg.con = fds;
+							reqArg.i_fd = tfd;
+							reqArg.pool = pool;
+							reqArg.users = users;
+							reqArg.fd = fds[tfd].fd;
+
+							fds[tfd].fd = -2;
+							fds[tfd].revents = 0;
+
+							threadpool_add( pool, requests_handler, &reqArg );
+						pthread_mutex_unlock( &poll_l );
+					}
+
+			}//close for() of poll
+	}//close while(true)
 
 	return 0;
 }

@@ -529,7 +529,6 @@ int readMsg(long fd, message_t *msg)
 		left -= r;
 	}
 
-
 	free( buff );
 
 	return ( size_buf + msg->data.hdr.len );

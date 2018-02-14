@@ -64,11 +64,12 @@ queue_t *initialQueue()
 {
     queue_t *q = NULL;
 
-    if( (q = ( queue_t * )malloc( sizeof( queue_t ) )) == NULL )//check if malloc is ok
+    if( (q = ( queue_t * )malloc( sizeof( queue_t ) )) == NULL ) //check if malloc is ok
     {
         fprintf( stderr, "Problem to allocates space for queue" );
         return NULL;
     }
+
     q->queue_lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
     if( (q->head = ( node_t * )malloc( sizeof( node_t ) )) == NULL )
     {
@@ -76,6 +77,7 @@ queue_t *initialQueue()
     	free( q );
 		return NULL;
     }
+
     q->head->ptr = NULL;
     q->head->next = NULL;
     q->head->prev = NULL;
@@ -138,17 +140,38 @@ int push( queue_t *q, void *new_data )
 void *pull( queue_t *q )
 {
 	void *ret = NULL;
-	if( q->head->ptr != NULL )
+	if( q->head != NULL )
 	{
-		node_t *tmp = NULL;
+		if( q->head->ptr != NULL )
+		{
+			node_t *tmp = NULL;
+			if( q->head->next == NULL )
+			{
+				pthread_mutex_lock( &q->queue_lock );
+					tmp = q->head;
 
-		pthread_mutex_lock( &q->queue_lock );
-			tmp = (node_t *)q->head;
-			q->head = q->head->next;
-			q->queue_len -= 1;
-		pthread_mutex_unlock( &q->queue_lock );
+					q->head = ( node_t * )malloc( sizeof( node_t ) );
+					q->head->ptr = NULL;
+					q->head->next = NULL;
+					q->head->prev = NULL;
+					q->tail = q->head;
+					q->queue_len = 0;
+				pthread_mutex_unlock( &q->queue_lock );
+			}
+			else
+			{
+				pthread_mutex_lock( &q->queue_lock );
+					tmp = q->head;
 
-		ret = tmp->ptr;
+					q->head = q->head->next;
+					q->head->prev = NULL;
+					q->queue_len -= 1;
+				pthread_mutex_lock( &q->queue_lock );
+			}
+
+			ret = tmp->ptr;
+			free( tmp );
+		}
 	}
 
 	return ret;
@@ -161,8 +184,7 @@ void *pull( queue_t *q )
  */
 int remove_node( queue_t *q, node_t *rm )
 {
-
-	if( rm != NULL )
+	if( rm != NULL && rm->ptr != NULL )
 	{
 		if( rm->prev == NULL )
 		{
@@ -231,6 +253,7 @@ void clear_queue( queue_t *q )
 			node_t *tmp = (node_t *)q->head;
 			q->head = q->head->next;
 		pthread_mutex_unlock( &q->queue_lock );
+		free( tmp->ptr );
 		free( tmp );
 	}
 
@@ -249,21 +272,12 @@ void clear_queue( queue_t *q )
  */
 void destroy_queue( queue_t *q )
 {
-
 	if( q != NULL )
 	{
-		pthread_mutex_lock( &q->queue_lock );
-			while( q->head != q->tail )
-			{
-				node_t *tmp = (node_t *)q->head;
-				q->head = q->head->next;
-				free( tmp );
-			}
+		clear_queue( q );
 
-			if( q->head != NULL )
-			{
-				free( (void *)q->head );
-			}
+		pthread_mutex_lock( &q->queue_lock );
+			free( q->head );
 		pthread_mutex_unlock( &q->queue_lock );
 
 		free( q );

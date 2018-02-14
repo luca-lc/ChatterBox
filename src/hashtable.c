@@ -102,7 +102,7 @@ hashtable_t *initTable( unsigned int length )
 	}
 	//init elem table
 	table->ht_lock = ( pthread_mutex_t )PTHREAD_MUTEX_INITIALIZER;
-	table->size = length;
+	table->max_u = length;
 	table->reg_users = 0;
 	table->active_user = initialQueue();
 	table->groups = initialQueue();
@@ -130,7 +130,6 @@ bool insert( hashtable_t *table, char *name )
 		pthread_mutex_lock( &table->ht_lock );
 			if( (table->users[val].user = (user_t *)malloc( sizeof( user_t ) )) == NULL )
 			{
-
 				pthread_mutex_unlock( &table->ht_lock );
 				return false;
 			}
@@ -139,7 +138,7 @@ bool insert( hashtable_t *table, char *name )
 
 			table->users[val].user->chats = initialQueue();
 
-			table->users[val].user->key = val;
+			table->users[val].user->fd_online = -1;
 
 			table->reg_users += 1;
 
@@ -163,7 +162,7 @@ bool insert( hashtable_t *table, char *name )
 
 		strcpy(tmp->nickname, name);
 
-		tmp->key = val;
+		tmp->fd_online = -1;
 
 		tmp->chats = initialQueue();
 
@@ -250,7 +249,7 @@ bool removing( hashtable_t *table, char *name )
 		pthread_mutex_lock( &table->ht_lock );
 			free( tmp->nickname );
 			free( tmp->chats );
-			tmp->key = -1;
+			tmp->fd_online = -1;
 			table->users[val].user = NULL;
 			if( subst != NULL )
 			{
@@ -286,7 +285,7 @@ bool removing( hashtable_t *table, char *name )
 						table->users[val].collision->tail = e->prev;
 						free( tmp->chats );
 						free( tmp->nickname );
-						tmp->key = -1;
+						tmp->fd_online = -1;
 						free( e );
 						return true;
 					}
@@ -296,7 +295,7 @@ bool removing( hashtable_t *table, char *name )
 						e->prev->next = NULL;
 						free( tmp->chats );
 						free( tmp->nickname );
-						tmp->key = -1;
+						tmp->fd_online = -1;
 						free( e );
 						return true;
 					}
@@ -309,7 +308,7 @@ bool removing( hashtable_t *table, char *name )
 						e->next->prev = NULL;
 						free( tmp->chats );
 						free( tmp->nickname );
-						tmp->key = -1;
+						tmp->fd_online = -1;
 						free( e );
 						return true;
 					}
@@ -319,7 +318,7 @@ bool removing( hashtable_t *table, char *name )
 						e->next->prev = e->prev;
 						free( tmp->chats );
 						free( tmp->nickname );
-						tmp->key = -1;
+						tmp->fd_online = -1;
 						free( e );
 						return true;
 					}

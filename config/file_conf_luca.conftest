@@ -7,10 +7,10 @@
 UnixPath         = /home/luca/workspace/ChatterBox/tmp/chatty_socket
 
 # numero massimo di connessioni pendenti
-MaxConnections	 = 32
+MaxConnections	 = 5
 
 # numero di thread nel pool 
-ThreadsInPool    = 8
+ThreadsInPool    = 1
 
 # dimensione massima di un messaggio testuale (numero di caratteri)
 MaxMsgSize       = 512

@@ -65,6 +65,9 @@ typedef enum {
 /*#*/	OP_NICK_AVAILABLE = 31,	//nickname already available in that group
 /*#*/	OP_GROUP_UNKNOWN = 32, //group not available
 
+		OP_TOO_MANY_CONN = 33, //too many connection in server
+/*#*/ OP_UNKNOWN = 34, //unrecognized operation
+
 
     OP_END          = 100 // limite superiore agli id usati per le operazioni
 

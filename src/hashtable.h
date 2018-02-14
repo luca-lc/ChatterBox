@@ -39,7 +39,7 @@ extern int _MAX_HIST;
 typedef struct us
 {
 	char nickname[MAX_NAME_LENGTH];
-	int key;
+	int fd_online;
 	queue_t *chats;
 }user_t;
 
@@ -65,7 +65,7 @@ typedef struct ht
 	ht_elem_t *users;
 	queue_t *active_user;
 	queue_t *groups;
-	int size;
+	int max_u;
 	int reg_users;
 }hashtable_t;
 

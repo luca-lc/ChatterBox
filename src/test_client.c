@@ -285,52 +285,13 @@ int main(void)
 		}
 
 		printf( "\n\n" );
-		op = 0;
+		op = -1;
 	}while( !stop );
 
 
 
 
-//	struct stat st;
-//	if (stat(msg.data.buf, &st)==-1)
-//	{
-//		printf ("file does not exist" );
-//		return -1;
-//	}
-//	if (!S_ISREG(st.st_mode))
-//	{
-//		printf ("file does not exist" );
-//		return -1;
-//	}
-//
-//	int ffd = open(tmp, O_RDONLY );
-//	if( ffd < 0 )
-//		return -1;
-//
-//
-//	if (sendRequest(c_fd, &msg) == -1)
-//		return -1;
-//
-//
-//	char *mappedfile = mmap(NULL, st.st_size, PROT_READ,MAP_PRIVATE, ffd, 0);
-//	message_data_t data;
-//
-//	if( mappedfile )
-//	{
-//		setData(&data, "", mappedfile, st.st_size );
-//
-//		if( sendData( c_fd, &data ) == -1 )
-//			return -1;
-//		else
-//			printf( "msg sent\n" );
-//	}
-//
-//
-//
-//
-//
 
-//	printf("Client %d ha inviato il messaggio\n", getpid());
 
 	sleep( 2 );
 
