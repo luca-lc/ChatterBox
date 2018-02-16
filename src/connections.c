@@ -316,7 +316,7 @@ int readData(long fd, message_data_t *data)
 	int offset = 0;
 	memcpy( &data->hdr.len, buff + offset, sizeof( data->hdr.len ) );
 	offset += sizeof( int );
-    memcpy( data->hdr.receiver, buff + offset, sizeof( data->hdr.receiver ) );
+   memcpy( data->hdr.receiver, buff + offset, sizeof( data->hdr.receiver ) );
 
 
 

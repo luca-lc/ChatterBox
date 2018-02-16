@@ -13,7 +13,7 @@ MaxConnections	 = 5
 ThreadsInPool    = 1
 
 # dimensione massima di un messaggio testuale (numero di caratteri)
-MaxMsgSize       = 512
+MaxMsgSize       = 5
 
 # dimensione massima di un file accettato dal server (kilobytes)
 MaxFileSize      = 1024

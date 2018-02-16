@@ -48,11 +48,11 @@ void pars( char *name, struct s_conf *s )
 {
     FILE *f;
     if( (f=fopen( name, "r" )) == NULL )
-    {
-        perror( "fopen()" );
-        fprintf( stderr, "Problem to open file %s\n", name );
-        exit( EXIT_FAILURE );
-    }
+		 {
+			  perror( "fopen()" );
+			  fprintf( stderr, "Problem to open file %s\n", name );
+			  exit( EXIT_FAILURE );
+		 }
 
 
     char buff[1024], *str;
@@ -60,49 +60,48 @@ void pars( char *name, struct s_conf *s )
     while( fgets( buff, sizeof( buff ), f ) != NULL )
     {
         if(buff[0] == COMMENT || buff[0] == NEW_LINE )
-        {
-            continue;
-        }
+			  {
+					continue;
+			  }
 
         char prm[1024], val[1024];
 
         str = strtok( buff, TOKEN );
         if( str == NULL )
-        {
-            continue;
-        }
+			  {
+					continue;
+			  }
         else
-        {
-            strncpy( prm, str, sizeof( prm ) );
-        }
+			  {
+					strncpy( prm, str, sizeof( prm ) );
+			  }
 
         str = strtok( NULL, TOKEN );
         if( str == NULL )
-        {
-            continue;
-        }
+			  {
+					continue;
+			  }
         else
-        {
-            strncpy( val, str, sizeof( val ) );
-        }
+			  {
+					strncpy( val, str, sizeof( val ) );
+			  }
 
         trim( prm );
         trim( val );
 
 
         if( strcmp( prm, "StatFileName" ) == 0 )
-        {
-            memcpy( s->StatFileName, val, sizeof( s->StatFileName ) );
-        }
+			  {
+					memcpy( s->StatFileName, val, sizeof( s->StatFileName ) );
+			  }
         if( strcmp( prm, "DirName" ) == 0 )
-        {
-            memcpy( s->DirName, val, sizeof( s->DirName ) );
-        }
+			  {
+					memcpy( s->DirName, val, sizeof( s->DirName ) );
+			  }
         if( strcmp( prm, "UnixPath" ) == 0 )
-        {
-            memcpy( s->UnixPath, val, sizeof( s->UnixPath ) );
-        }
-
+			  {
+					memcpy( s->UnixPath, val, sizeof( s->UnixPath ) );
+			  }
 
 
         if( strcmp( prm, "MaxFileSize") == 0 )

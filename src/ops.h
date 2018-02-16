@@ -50,26 +50,28 @@ typedef enum {
     TXT_MESSAGE     = 21,  // notifica di messaggio testuale
     FILE_MESSAGE    = 22,  // notifica di messaggio "file disponibile"
 
-/*#*/    OP_FAIL         = 25,  // generico messaggio di fallimento
-/*#*/   OP_NICK_ALREADY = 26,  // nickname o groupname gia' registrato
-/*#*/   OP_NICK_UNKNOWN = 27,  // nickname non riconosciuto
-    OP_MSG_TOOLONG  = 28,  // messaggio con size troppo lunga
-    OP_NO_SUCH_FILE = 29,  // il file richiesto non esiste
+/*#*/    OP_FAIL         = 25,// generico messaggio di fallimento
+/*#*/   OP_NICK_ALREADY = 26, // nickname o groupname gia' registrato
+/*#*/   OP_NICK_UNKNOWN = 27, // nickname non riconosciuto
+    OP_MSG_TOOLONG  = 28,  	// messaggio con size troppo lunga
+    OP_NO_SUCH_FILE = 29,  	// il file richiesto non esiste
     
 
-    /* 
-     * aggiungere qui altri messaggi di ritorno che possono servire 
-     */
+	/*
+	* aggiungere qui altri messaggi di ritorno che possono servire
+	*/
 
-/*#*/	OP_ALREADY_ONLINE = 30,	//user with nickname already online
-/*#*/	OP_NICK_AVAILABLE = 31,	//nickname already available in that group
-/*#*/	OP_GROUP_UNKNOWN = 32, //group not available
+	OP_ALREADY_ONLINE = 30,		//user with nickname already online
+	OP_NICK_AVAILABLE = 31,		//nickname already available in that group
+	OP_GROUP_UNKNOWN = 32, 		//group not available
 
-		OP_TOO_MANY_CONN = 33, //too many connection in server
-/*#*/ OP_UNKNOWN = 34, //unrecognized operation
+	OP_TOO_MANY_CONN = 33, 		//too many connection in server
+	OP_UNKNOWN = 34, 				//unrecognized operation
+	OP_RM_USR_G = 35,				//remove user from group
 
 
-    OP_END          = 100 // limite superiore agli id usati per le operazioni
+
+	OP_END          = 100 // limite superiore agli id usati per le operazioni
 
 } op_t;
     

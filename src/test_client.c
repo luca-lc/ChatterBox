@@ -103,7 +103,7 @@ int main(void)
 
 					printf( "Insert your message\n" );
 					scanf( "%s", mex );
-					setData( &my_msg.data, rec, mex, sizeof(mex) );
+					setData( &my_msg.data, rec, mex, strlen(mex) );
 
 					sendRequest( c_fd, &my_msg );
 
@@ -114,7 +114,7 @@ int main(void)
 					}
 					else
 					{
-						printf( "Problem to receive message\n" );
+						printf( ">> %d", server_msg.hdr.op );
 					}
 				}break;
 
@@ -275,6 +275,25 @@ int main(void)
 					stop = 1;
 				}
 
+			}break;
+
+			case 10 :
+			{
+				printf( "INSERT GROUP NAME\n" );
+				scanf( "%s", tmp );
+				setHeader( &my_msg.hdr, OP_RM_USR_G, name );
+				setData( &my_msg.data, tmp, NULL, 0 );
+				sendRequest( c_fd, &my_msg );
+
+				readHeader( c_fd, &server_msg.hdr );
+				if( server_msg.hdr.op == OP_OK )
+				{
+					printf( "USER REMOVED\n" );
+				}
+				else
+				{
+					printf( "%d\n", server_msg.hdr.op );
+				}
 			}break;
 
 			default:

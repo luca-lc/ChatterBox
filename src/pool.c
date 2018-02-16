@@ -64,7 +64,7 @@
 
 
 int _MAX_CONN, _THREADn;	///< max_conn is number of max connection to handle
-							///< num_thread is number of thread that operates in threadpool_t
+									///< num_thread is number of thread that operates in threadpool_t
 
 
 
