@@ -214,7 +214,7 @@ static int execute_requestreply(int connfd, operation_t *o) {
 	    return -msg.hdr.op; // codice di errore ritornato
 	} break;
 	default: {
-	    fprintf(stderr, "ERRORE: risposta non valida\n");
+	    fprintf(stderr, "ERRORE: %d risposta non valida\n", msg.hdr.op);
 	    return -1;
 	}
 	}

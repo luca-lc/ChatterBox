@@ -30,7 +30,7 @@
 int main(void)
 {
 	int stop = 0;
-	char sock[] = "/home/luca/workspace/ChatterBox/tmp/chatty_socket";
+	char sock[] = "/home/luca/eclipse-workspace/ChatterBox/tmp/chatty_socket";
 	int c_fd = openConnection( sock, 3, 2 );
 
 	message_t my_msg;

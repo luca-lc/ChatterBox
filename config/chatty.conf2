@@ -16,10 +16,10 @@
 DirName          = /tmp/chatty 
 
 # dimensione massima di un file accettato dal server (kilobytes)
-MaxFileSize      = 50
+MaxFileSize      = 100
 
 # numero massimo di connessioni pendenti
-MaxConnections	 = 4
+MaxConnections	 = 6
 
 # numero di thread nel pool 
 ThreadsInPool    = 4

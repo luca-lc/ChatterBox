@@ -86,35 +86,37 @@ pthread_mutex_t lock_pool = PTHREAD_MUTEX_INITIALIZER;
  */
 void thread_work( threadpool_t *pool )
 {
-	while( pool->count >= 0 )
+	while( 1 )
 	{
 		void (*tfun)(void *);
 		void *arg_tfun;
 
 		pthread_mutex_lock( &(pool->lock_t) );
 
-		while( pool->count == 0 )
+		while( pool->task->head->ptr == NULL )
 		{
+//			printf( "WAITING...\n" );
 			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
 		}
 
 		thread_task_t *task = NULL;
 		if( (task = pull( pool->task )) == NULL )
 		{
-			perror( "pull" );
-			fprintf( stderr, "Problem with tasks queue\n" );\
-			return;
+			perror( "pool" );
+			fprintf( stderr, "Problem with tasks queue\n" );
+			continue;
 		}
 
 		pool->count -= 1;
 
+
 		tfun = task->function;
 		arg_tfun = task->args;
 
-		pthread_cond_signal( &(pool->cond_t) );
+		if( pool->task->queue_len > 0 )
+			pthread_cond_signal( &(pool->cond_t) );
 		pthread_mutex_unlock( &(pool->lock_t) );
 
-//		( (task->function) (task->args) );
 		tfun( arg_tfun );
 
 		free( task );
@@ -134,12 +136,10 @@ threadpool_t *pool_creation( )
 	if( (pool = ( threadpool_t * )malloc( sizeof( threadpool_t ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to allocate space for threadpool" );
-		exit( EXIT_FAILURE );
+		return NULL;
 	}
 
 	// INITIALIZATION
-	pool->thread_crt = 0;
-	pool->queue_size = _MAX_CONN; ///< external variable
 	pool->count = 0;
 	pool->shutdown = 0;
 
@@ -147,14 +147,16 @@ threadpool_t *pool_creation( )
 	if( (pool->thread = ( pthread_t * )malloc( _THREADn * sizeof( pthread_t ) ) ) == NULL )
 	{
 		fprintf( stderr, "Problem to allocate space for thread" );
-		exit( EXIT_FAILURE );
+		free( pool );
+		return NULL;
 	}
 
 	if( (pool->task = initialQueue() ) == NULL )
 	{
-		perror( "queue" );
 		fprintf( stderr, "Problem to allocating space for tasks queue" );
-		exit( EXIT_FAILURE );
+		free( pool->thread );
+		free( pool );
+		return NULL;
 	}
 
 
@@ -164,15 +166,17 @@ threadpool_t *pool_creation( )
 
 	for( int i = 0; i < _THREADn; i++ )
 	{
-		if( pthread_create( &(pool->thread[i]), NULL, thread_work, pool ) != 0 )
+		if( pthread_create( &(pool->thread[i]), NULL, (void *)thread_work, (void *)pool ) != 0 )
 		{
-			threadpool_destroy( pool, 0 ); //TODO: destroy function
+			threadpool_destroy( pool, 0 );
 			fprintf( stderr, "Problem to create thread" );
-			exit( EXIT_FAILURE );
+			free( pool->thread );
+			free( pool->task );
+			free( pool );
+			
+			return NULL;
 		}
-        pthread_detach(pool->thread[i]);
-
-		pool->thread_crt += 1;
+		pthread_detach( pool->thread[i] );
 	}
 
 	return pool;
@@ -191,11 +195,6 @@ threadpool_t *pool_creation( )
 int threadpool_add( threadpool_t *pool, void(*functions)(void *), void *arg )
 {
 	if( pool == NULL || functions == NULL )
-	{
-		return -1;
-	}
-
-	if( pthread_mutex_lock( &(pool->lock_t) ) != 0 )
 	{
 		return -1;
 	}
@@ -222,8 +221,12 @@ int threadpool_add( threadpool_t *pool, void(*functions)(void *), void *arg )
 
 	push( pool->task, tmp_t );
 
-	pool->count += 1;
+	if( pthread_mutex_lock( &(pool->lock_t) ) != 0 )
+	{
+		return -1;
+	}
 
+	pool->count += 1;
 
 	if( pthread_cond_signal( &(pool->cond_t) ) != 0 )
 	{
@@ -316,9 +319,9 @@ int threadpool_destroy( threadpool_t *pool, int power_off )
 	if( pool->shutdown == 1 )
 	{
 		//kill all worker thread
-		for( int i = 0; i < pool->thread_crt; i++ )
+		for( int i = 0; i < _THREADn; i++ )
 		{
-			if( (err = pthread_kill( pool->thread[i], SIGCONT )) != 0 )
+			if( (err = pthread_kill( pool->thread[i], SIGHUP )) != 0 )
 			{
 				err = err * -1;
 			}
@@ -327,7 +330,7 @@ int threadpool_destroy( threadpool_t *pool, int power_off )
 	else
 	{
 		//join all worker thread
-		for( int i = 0; i < pool->thread_crt; i++ )
+		for( int i = 0; i < _THREADn; i++ )
 		{
 			if( pthread_join( pool->thread[i], NULL ) != 0 )
 			{

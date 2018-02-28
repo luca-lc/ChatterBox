@@ -21,6 +21,7 @@
 ******************************************************************************/
 #include <src/queue.h>
 #include <src/pool.h>
+#include <src/connections.h>
 #include "src/chatty.h"
 
 
@@ -41,6 +42,7 @@ typedef struct us
 	char nickname[MAX_NAME_LENGTH];
 	int fd_online;
 	queue_t *chats;
+	queue_t *mygroup;
 }user_t;
 
 
@@ -59,12 +61,23 @@ typedef struct elem
 /**
  *
  */
+typedef struct gr
+{
+	group_chat_t *group;
+	queue_t *collision;
+}ht_G_t;
+
+
+
+/**
+ *
+ */
 typedef struct ht
 {
 	pthread_mutex_t ht_lock;
 	ht_elem_t *users;
+	ht_G_t *groups;
 	queue_t *active_user;
-	queue_t *groups;
 	int max_u;
 	int reg_users;
 }hashtable_t;
@@ -109,6 +122,34 @@ user_t *search( hashtable_t *table, char *name );
  *
  */
 bool removing( hashtable_t *table, char *name );
+
+
+
+/**
+ * 
+ */
+bool addGroup( hashtable_t *table, char *name );
+
+
+
+/**
+ * 
+ */
+group_chat_t *searchGroup( hashtable_t *table, char *name );
+
+
+
+/**
+ * 
+ */
+bool removing( hashtable_t *table, char *name );
+
+
+
+/**
+ *
+ */
+bool removingGroup( hashtable_t *table, char *name );
 
 
 

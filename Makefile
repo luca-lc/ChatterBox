@@ -89,7 +89,7 @@ $(SOURCE_DIR)/%.o: $(SOURCE_DIR)/%.h $(SOURCE_DIR)/%.c
 $(BIN_DIR)/chatty.o: $(SOURCE_DIR)/chatty.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
 
-$(BIN_DIR)/client.o: $(SOURCE_DIR)/test_client.c
+$(BIN_DIR)/client.o: $(SOURCE_DIR)/client.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
 	
 

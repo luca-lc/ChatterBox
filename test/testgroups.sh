@@ -63,29 +63,45 @@ if [[ $((256-e)) != $OP_NICK_UNKNOWN ]]; then
 fi
 
 # minni manda un file a tutti gli utenti dei gruppi a cui appartiene
-./client -l $1  -k minni -S "Vi mando un file":gruppo1 -s ./libchatty.a:gruppo1 -s ./libchatty.a:gruppo2 -S "Vi ho mandato un file":gruppo2
+./client -l $1  -k minni -S "Vi mando un file":gruppo1 -s ../lib/libchatty.a:gruppo1 -s ../lib/libchatty.a:gruppo2 -S "Vi ho mandato un file":gruppo2
 if [[ $? != 0 ]]; then
     exit 1
 fi
 
+
+echo "|"
+echo "V"
 # ricevo i messaggi che mi sono perso
 ./client -l $1 -k pippo -p
 if [[ $? != 0 ]]; then
     exit 1
 fi
+echo "^"
+echo "1"
+echo "v"
 ./client -l $1 -k pluto -p
 if [[ $? != 0 ]]; then
     exit 1
 fi
+echo "^"
+echo "2"
+echo "v"
 ./client -l $1 -k minni -p
 if [[ $? != 0 ]]; then
     exit 1
 fi
+echo "^"
+echo "3"
+echo "v"
 ./client -l $1 -k topolino -p
 if [[ $? != 0 ]]; then
     exit 1
 fi
-
+echo "^"
+echo "4"
+echo "v"
+echo "^"
+echo "|"
 ./client -l $1 -k topolino -d gruppo1
 if [[ $? != 0 ]]; then
     exit 1

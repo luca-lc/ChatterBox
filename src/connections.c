@@ -216,7 +216,7 @@ int sendRequest(long fd, message_t *msg)
 	{
 		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -236,7 +236,7 @@ int sendRequest(long fd, message_t *msg)
 	{
 		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -256,7 +256,7 @@ int sendRequest(long fd, message_t *msg)
 	{
 		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -297,9 +297,9 @@ int readData(long fd, message_data_t *data)
 	int left = size_buf, r = 0, s = 0;
 	while( left > 0 )
 	{
-		if( (r = recv( (int)fd, buff, left, 0)) == -1 )
+		if( (r = recv( (int)fd, buff+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -312,6 +312,7 @@ int readData(long fd, message_data_t *data)
 		s += r;
 		left -= r;
 	}
+
 	//divide the buffer contents
 	int offset = 0;
 	memcpy( &data->hdr.len, buff + offset, sizeof( data->hdr.len ) );
@@ -320,15 +321,15 @@ int readData(long fd, message_data_t *data)
 
 
 
-	char *tmp_body = (char *)malloc( data->hdr.len * sizeof(char) );
+	data->buf = (char *)malloc( data->hdr.len * sizeof(char) );
 	left = data->hdr.len, r = 0, s = 0;
 
 	//receive body
 	while( left > 0 )
 	{
-		if( (r = recv( (int)fd, tmp_body+s, left, 0)) == -1 )
+		if( (r = recv( (int)fd, data->buf+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -342,19 +343,7 @@ int readData(long fd, message_data_t *data)
 		left -= r;
 	}
 
-
-    if ( (data->buf = ( char * )malloc( data->hdr.len * sizeof( char ) )) == NULL )
-	{
-		perror( "malloc()" );
-		fprintf( stderr, "Problem to allocating space for message body" );
-		return EXIT_FAILURE;
-	}
-
-	memcpy( data->buf, tmp_body, data->hdr.len );
-
-
 	free( buff );
-	free( tmp_body );
 	return( size_buf + data->hdr.len );
 }
 
@@ -387,7 +376,7 @@ int sendData( long fd, message_data_t *msg )
 	{
 		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -410,7 +399,7 @@ int sendData( long fd, message_data_t *msg )
 	{
 		if( (r = send( (int)fd, msg->buf+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -452,7 +441,7 @@ int readMsg(long fd, message_t *msg)
 	{
 		if( (r = recv( (int)fd, buff+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -480,7 +469,7 @@ int readMsg(long fd, message_t *msg)
 	{
 		if( (r = recv( (int)fd, buff+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}
@@ -515,7 +504,7 @@ int readMsg(long fd, message_t *msg)
 	{
 		if( (r = recv( (int)fd, msg->data.buf+s, left, 0)) == -1 )
 		{
-			if( errno == EINTR )
+			if( errno == EINTR || errno == EAGAIN )
 			{
 				continue;
 			}

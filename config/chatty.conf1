@@ -25,7 +25,7 @@ ThreadsInPool    = 8
 MaxMsgSize       = 512
 
 # dimensione massima di un file accettato dal server (kilobytes)
-MaxFileSize      = 1024
+MaxFileSize      = 2048
 
 # numero massimo di messaggi che il server 'ricorda' per ogni client
 MaxHistMsgs      = 16

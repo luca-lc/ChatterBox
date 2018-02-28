@@ -8,7 +8,6 @@
 
 struct statistics
 {
-	 pthread_mutex_t statLock;							// lock per aggiorare gli errori
     unsigned long nusers;                       // n. di utenti registrati
     unsigned long nonline;                      // n. di utenti connessi
     unsigned long ndelivered;                   // n. di messaggi testuali consegnati
@@ -16,6 +15,8 @@ struct statistics
     unsigned long nfiledelivered;               // n. di file consegnati
     unsigned long nfilenotdelivered;            // n. di file non ancora consegnati
     unsigned long nerrors;                      // n. di messaggi di errore
+	pthread_mutex_t statLock;					// lock per aggiorare gli errori
+
 };
 
 

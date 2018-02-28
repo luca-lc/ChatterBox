@@ -56,18 +56,18 @@
 int checkin( hashtable_t *users, char *nick )
 {
 	int out = false;
-
-	if( search( users, nick ) == NULL )
-	{
-		out = insert( users, nick );
+	pthread_mutex_lock( &users->ht_lock );
+		if( search( users, nick ) == NULL )
+		{
+			out = insert( users, nick );
+	pthread_mutex_unlock( &users->ht_lock );
 		return out;
-	}
-	else
-	{
-//		fprintf( stderr, "%s already exists\n", arg->name );
+		}
+		else
+		{
+	pthread_mutex_unlock( &users->ht_lock );
 		return OP_NICK_ALREADY;
-	}
-	return out;
+		}
 }
 
 
@@ -81,8 +81,9 @@ int checkin( hashtable_t *users, char *nick )
  */
 user_t *connecting( hashtable_t *users, char *nick )
 {
-	user_t *user = search( users, nick );
-
+	pthread_mutex_lock( &users->ht_lock );
+		user_t *user = search( users, nick );
+	pthread_mutex_unlock( &users->ht_lock );
 	return user;
 }
 
@@ -98,10 +99,12 @@ user_t *connecting( hashtable_t *users, char *nick )
 bool delete( hashtable_t *users, char *nick )
 {
 	bool out = false;
+	pthread_mutex_lock( &users->ht_lock );
 	if( search( users, nick ) != NULL )
 	{
 		out = removing( users, nick );
 	}
+	pthread_mutex_unlock( &users->ht_lock );
 
 	return out;
 }

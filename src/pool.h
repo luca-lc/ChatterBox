@@ -77,11 +77,8 @@ typedef struct pool
 	queue_t *task;
 	pthread_mutex_t lock_t;
 	pthread_cond_t cond_t;
-	int thread_crt;
-	int queue_size;
 	int count;
 	int shutdown;
-	int next_max;
 }threadpool_t;
 
 

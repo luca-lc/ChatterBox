@@ -89,6 +89,7 @@ typedef struct grp_msg
 	char chat_title[MAX_NAME_LENGTH];
 	queue_t *participants;
 	queue_t *messages;
+    char creator[MAX_NAME_LENGTH];
 }group_chat_t;
 
 /* ------ funzioni di utilità ------- */

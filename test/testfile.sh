@@ -29,27 +29,42 @@ sleep 1
 if [[ $? != 0 ]]; then
     exit 1
 fi
+echo ""
+echo ""
+echo ""
+
 # secondo e terzo
 ./client -l $1 -k paperino -S "ciao da paperino":minni -S "ciao ciao!!!":minni
 if [[ $? != 0 ]]; then
     exit 1
 fi
+echo ""
+echo ""
+echo ""
 # quarto
 ./client -l $1 -k qui -S "ciao a tutti": 
 if [[ $? != 0 ]]; then
     exit 1
 fi
+echo ""
+echo ""
+echo ""
 # quinto e sesto
 ./client -l $1 -k quo -S "ciao a tutti":  -S "ciao da quo":minni
 if [[ $? != 0 ]]; then
     exit 1
 fi
+echo ""
+echo ""
+echo ""
 # settimo ed ottavo
 ./client -l $1 -k qua -S "ciao a tutti":  -S "ciao da qua":minni -p
 if [[ $? != 0 ]]; then
     exit 1
 fi
-
+echo ""
+echo ""
+echo ""
 wait $pid
 if [[ $? != 0 ]]; then
     echo "ESCO8"
@@ -78,6 +93,10 @@ if [[ $? != 0 ]]; then
     exit 1
 fi
 
+echo ""
+echo ""
+echo ""
+
 # registro pippo
 ./client -l $1 -c pippo
 if [[ $? != 0 ]]; then
@@ -89,12 +108,17 @@ if [[ $? != 0 ]]; then
     exit 1
 fi
 
+echo ""
+echo ""
+echo ""
+
 # pippo e pluto si scambiano files
 ./client -l $1 -k pippo -S "Ti mando un file":pluto -s ./client:pluto
 if [[ $? != 0 ]]; then
     exit 1
 fi
-./client -l $1 -k pluto -S "Ti mando un file":pippo -s ./chatty:pippo -s ./libchatty.a:pippo
+echo ""
+./client -l $1 -k pluto -S "Ti mando un file":pippo -s ./chatty:pippo -s ../lib/libchatty.a:pippo
 if [[ $? != 0 ]]; then
     exit 1
 fi
@@ -102,7 +126,7 @@ fi
 # controllo che i file siano arrivati al server e che siano corretti
 md51=$(md5sum ./client | cut -d " " -f 1)
 md52=$(md5sum ./chatty | cut -d " " -f 1)
-md53=$(md5sum ./libchatty.a | cut -d " " -f 1)
+md53=$(md5sum ../lib/libchatty.a | cut -d " " -f 1)
 md5client=$(md5sum $2/client | cut -d " " -f 1)
 md5chatty=$(md5sum $2/chatty | cut -d " " -f 1)
 md5lib=$(md5sum $2/libchatty.a | cut -d " " -f 1)
