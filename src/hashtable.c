@@ -159,10 +159,10 @@ bool insert( hashtable_t *table, char *name )
 	}
 	else
 	{
-			if( table->users[val].collision == NULL )
-			{
-				table->users[val].collision = initialQueue();
-			}
+		if( table->users[val].collision == NULL )
+		{
+			table->users[val].collision = initialQueue();
+		}
 
 		user_t *tmp;
 		if( (tmp = (user_t *)malloc( sizeof( user_t ) )) == NULL )
@@ -211,7 +211,6 @@ bool addGroup( hashtable_t *table, char *name )
 	{
 		if( (table->groups[val].group = (group_chat_t *)malloc( sizeof( group_chat_t ) )) == NULL )
 		{
-			pthread_mutex_unlock( &table->ht_lock );
 			return false;
 		}
 
@@ -278,13 +277,14 @@ user_t *search( hashtable_t *table, char *name )
 		{
 			if( table->users[val].collision != NULL  )
 			{
-				user_t *tmp = NULL;
 				node_t *nt = table->users[val].collision->head;
-				while( nt != NULL && nt->ptr != NULL )
+				user_t *tmp = NULL;
+
+				while( nt != NULL )
 				{
 					tmp = nt->ptr;
 
-					if( strcmp( tmp->nickname, name ) == 0 )
+					if( tmp != NULL && strcmp( tmp->nickname, name ) == 0 )
 					{
 						break;
 					}
@@ -293,7 +293,15 @@ user_t *search( hashtable_t *table, char *name )
 						nt = nt->next;
 					}
 				}
-				return tmp;
+
+				if( nt == NULL )
+				{
+					return NULL;
+				}
+				else
+				{
+					return tmp;
+				}
 			}
 		}
 	}
@@ -322,11 +330,11 @@ group_chat_t *searchGroup( hashtable_t *table, char *name )
 		}
 		else
 		{
-			if( table->groups[val].collision != NULL && table->groups[val].collision->head != NULL )
+			if( table->groups[val].collision != NULL )
 			{
 				group_chat_t *tmp = NULL;
 				node_t *nt = table->groups[val].collision->head;
-				while( nt != NULL && nt->ptr != NULL )
+				while( nt != NULL )
 				{
 					tmp = nt->ptr;
 					if( strcmp( tmp->chat_title, name ) == 0 )
@@ -338,7 +346,10 @@ group_chat_t *searchGroup( hashtable_t *table, char *name )
 						nt = nt->next;
 					}
 				}
-				return tmp;
+				if( nt != NULL )
+					{
+						return tmp;
+					}
 			}
 		}
 	}
@@ -366,15 +377,17 @@ bool removing( hashtable_t *table, char *name )
 
 		user_t *tmp = table->users[val].user;
 
-			while( tmp->mygroup->head != tmp->mygroup->tail )
-				{
-					group_chat_t *g = pull( tmp->mygroup );
-					node_t *u = g->participants->head;
-					int stop = 0;
-						while( u != NULL && !stop )
+		while( tmp->mygroup != NULL )
+			{
+				group_chat_t *g = pull( tmp->mygroup );
+				if( g != NULL )
+					{
+						node_t *u = g->participants->head;
+
+						while( u != NULL )
 							{
-								user_t *n = u->ptr;
-								if( strcmp( n->nickname, tmp->nickname ) == 0 )
+								user_t *us = u->ptr;
+								if( strcmp( us->nickname, name ) == 0 )
 									{
 										remove_node( g->participants, u );
 										break;
@@ -384,182 +397,69 @@ bool removing( hashtable_t *table, char *name )
 										u = u->next;
 									}
 							}
-				}
-			destroy_queue( tmp->mygroup );
-
-
-			tmp->fd_online = -1;
-			table->users[val].user = NULL;
-
-			if( subst != NULL )
-			{
-				table->users[val].user = subst;
+					}
+				else
+					{
+						break;
+					}					
 			}
+		destroy_queue( tmp->mygroup );
 
-			table->reg_users -= 1;
+
+		tmp->fd_online = -1;
+		memset( &table->users[val].user[0], 0, sizeof( table->users[val].user ) );
+		
+		table->users[val].user = NULL;
+
+		if( subst != NULL )
+		{
+			table->users[val].user = subst;
+		}
+
+		table->reg_users -= 1;
 
 		return true;
 	}
 	else
 	{
-		user_t *tmp = NULL;
-
-		if( table->users[val].collision != NULL && table->users[val].collision->head != NULL )
+		if( table->users[val].collision != NULL )
 		{
-			node_t *ne = table->users[val].collision->head->next;
-			node_t *e = table->users[val].collision->head;
-			tmp = e->ptr;
-			while( strcmp(tmp->nickname, name) != 0 && ne != NULL )
-			{
-				e = ne;
-				tmp = e->ptr;
-				ne = ne->next;
-			}
+			node_t *n = table->users[val].collision->head;
+			user_t *u = NULL;
 
-			if( strcmp(tmp->nickname, name) == 0 )
-			{
-				if( ne == NULL )
+			while( n != NULL )
 				{
-					if( e->prev == NULL )
-					{
-						table->users[val].collision->head->ptr = NULL;
-						table->users[val].collision->tail = table->users[val].collision->head;
-
-						while( tmp->mygroup->head != tmp->mygroup->tail )
-							{
-								group_chat_t *g = pull( tmp->mygroup );
-								node_t *u = g->participants->head;
-								int stop = 0;
-									while( u != NULL && !stop )
-										{
-											user_t *n = u->ptr;
-											if( strcmp( n->nickname, tmp->nickname ) == 0 )
-												{
-													remove_node( g->participants, u );
-													stop = 1;
-												}
-											else
-												{
-													u = u->next;
-												}
-										}
-							}
-
-
-						destroy_queue( tmp->mygroup );
-						tmp->fd_online = -1;
-
-						free( tmp );
-						free( table->users[val].collision->head );
-						free( table->users[val].collision );
-						table->reg_users -= 1;
-
-						return true;
-					}
+					u = n->ptr;
+					if( u != NULL && strcmp( u->nickname, name) == 0 )
+						{
+							remove_node( table->users[val].collision, n );
+							break;
+						}
 					else
-					{
-						table->users[val].collision->tail = e->prev;
-						e->prev->next = NULL;
-
-						while( tmp->mygroup->head != NULL )
-							{
-								group_chat_t *g = pull( tmp->mygroup );
-								node_t *u = g->participants->head;
-								int stop = 0;
-									while( u != NULL && !stop )
-										{
-											user_t *n = u->ptr;
-											if( strcmp( n->nickname, tmp->nickname ) == 0 )
-												{
-													remove_node( g->participants, u );
-													stop = 1;
-												}
-											else
-												{
-													u = u->next;
-												}
-										}
-							}
-
-						destroy_queue( tmp->mygroup );
-						tmp->fd_online = -1;
-						free( e );
-						table->reg_users -= 1;
-
-						return true;
-					}
-				}
-				else
-				{
-					if( e->prev == NULL )
-					{
-						table->users[val].collision->head = e->next;
-						e->next->prev = NULL;
-
-						while( tmp->mygroup->head != tmp->mygroup->tail )
-							{
-								group_chat_t *g = pull( tmp->mygroup );
-								node_t *u = g->participants->head;
-								int stop = 0;
-									while( u != NULL && !stop )
-										{
-											user_t *n = u->ptr;
-											if( strcmp( n->nickname, tmp->nickname ) == 0 )
-												{
-													remove_node( g->participants, u );
-													stop = 1;
-												}
-											else
-												{
-													u = u->next;
-												}
-										}
-							}
-
-						destroy_queue( tmp->mygroup );
-						tmp->fd_online = -1;
-						free( e );
-						table->reg_users -= 1;
-
-						return true;
-					}
-					else
-					{
-						e->prev->next = e->next;
-						e->next->prev = e->prev;
-
-						while( tmp->mygroup->head != NULL )
-							{
-								group_chat_t *g = pull( tmp->mygroup );
-								node_t *u = g->participants->head;
-								int stop = 0;
-									while( u != NULL && !stop )
-										{
-											user_t *n = u->ptr;
-											if( strcmp( n->nickname, tmp->nickname ) == 0 )
-												{
-													remove_node( g->participants, u );
-													stop = 1;
-												}
-											else
-												{
-													u = u->next;
-												}
-										}
-							}
-
-						destroy_queue( tmp->mygroup );
-						tmp->fd_online = -1;
-						free( e );
-						table->reg_users -= 1;
-						return true;
-					}
+						{
+							n = n->next;
+						}
 				}
 
-			}
+
+			if( table->users[val].collision->head->ptr == NULL )
+				{
+					free( table->users[val].collision->head );
+					free( table->users[val].collision );
+					table->users[val].collision = NULL;
+				}
+
+			if( n == NULL )
+				{
+					return false;
+				}
+			else
+				{
+					table->reg_users -= 1;
+					return true;
+				}
 		}
 	}
-	pthread_mutex_unlock( &table->ht_lock );
 
 	return false;
 }
@@ -587,10 +487,12 @@ bool removingGroup( hashtable_t *table, char *name )
 
 		while( tmp->participants->head->ptr != NULL )
 			{
-				remove_node( tmp->participants, tmp->participants->head );
+				pull( tmp->participants );
 			}
 		destroy_queue( tmp->participants );
 
+
+		memset( &table->groups[val].group[0], 0, sizeof( table->groups[val].group ) );
 		table->groups[val].group = NULL;
 		free( tmp );
 
@@ -603,73 +505,41 @@ bool removingGroup( hashtable_t *table, char *name )
 	}
 	else
 	{
-		group_chat_t *tmp = NULL;
-		if( table->groups[val].collision != NULL && table->groups[val].collision->head != NULL )
+		if( table->groups[val].collision != NULL )
 		{
-			node_t *ne = table->groups[val].collision->head->next;
-			node_t *e = table->groups[val].collision->head;
-			tmp = e->ptr;
-			while( strcmp(tmp->chat_title, name) != 0 && ne != NULL )
-			{
-				e = ne;
-				tmp = e->ptr;
-				ne = ne->next;
-			}
 
-			if( strcmp(tmp->chat_title, name) == 0 )
-			{
-				if( ne == NULL )
+			node_t *n = table->groups[val].collision->head;
+			group_chat_t *t_g = NULL;
+
+			while( n != NULL )
 				{
-					if( e->prev == NULL )
-					{
-						table->groups[val].collision->head = e->next;
-						table->groups[val].collision->tail = e->prev;
-
-						destroy_queue( tmp->messages );
-						destroy_queue( tmp->participants );
-						
-						free( e );
-						return true;
-					}
+					t_g = n->ptr;
+					if( t_g != NULL && strcmp( t_g->chat_title, name ) == 0 )
+						{
+							remove_node( table->groups[val].collision, n );
+							break;
+						}
 					else
-					{
-						table->groups[val].collision->tail = e->prev;
-						e->prev->next = NULL;
-
-						destroy_queue( tmp->messages );
-						destroy_queue( tmp->participants );
-
-						free( e );
-						return true;
-					}
-				}
-				else
-				{
-					if( e->prev == NULL )
-					{
-						table->groups[val].collision->head = e->next;
-						e->next->prev = NULL;
-
-						destroy_queue( tmp->messages );
-						destroy_queue( tmp->participants );
-
-						free( e );
-						return true;
-					}
-					else
-					{
-						e->prev->next = e->next;
-						e->next->prev = e->prev;
-
-						destroy_queue( tmp->messages );
-						destroy_queue( tmp->participants );
-
-						free( e );
-						return true;
-					}
+						{
+							n = n->next;
+						}
 				}
 
-			}
+			if( table->groups[val].collision->head->ptr == NULL )
+				{
+					free( table->groups[val].collision->head );
+					free( table->groups[val].collision );
+					table->groups[val].collision = NULL ;
+				}
+
+			if( n == NULL )
+				{
+					return false;
+				}
+			else
+				{
+					return true;
+				}
 		}
 	}
 

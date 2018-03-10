@@ -211,7 +211,7 @@ int sendRequest(long fd, message_t *msg)
 
 
 	//send header
-	left =  sizeof(msg->hdr.op) + sizeof( msg->hdr.sender), r = 0, s = 0;
+	left =  sizeof(msg->hdr.op) + sizeof( msg->hdr.sender ), r = 0, s = 0;
 	while( left > 0 )
 	{
 		if( (r = send( (int)fd, buff+s, left, 0)) == -1 )

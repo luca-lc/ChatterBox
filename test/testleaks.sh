@@ -6,9 +6,10 @@ if [[ $# != 1 ]]; then
 fi
 
 rm -f valgrind_out
-/usr/bin/valgrind --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
+/usr/bin/valgrind --leak-check=full ./chatty -f ../config/chatty.conf1 >& ./valgrind_out &
 pid=$!
 
+# exit 0
 # aspetto un po' per far partire valgrind
 sleep 5
 
@@ -28,20 +29,36 @@ clientpid+="$! "
 ./client -l $1 -c quo &
 clientpid+="$! "
 ./client -l $1 -c qua &
-clientpid+=$!
+clientpid+="$! "
 
 wait $clientpid
 
+echo ""
+echo ""
+echo "1"
 ./client -l $1 -k minni -S "Ciao a tutti, io ricevo e basta": -R -1 &
 pid1=$!
+
+echo ""
+echo ""
+echo "2"
 ./client -l $1 -k qua -S "Ciao a tutti, io ricevo e basta": -R -1 &
 pid2=$!
 
-./client -l $1 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s client:minni -s chatty:qua 
+echo ""
+echo ""
+echo "3"
+./client -l $1 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s ./client:minni -s ./chatty:qua 
 
-./client -l $1 -k paperino -p -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ./libchatty.a:minni
+echo ""
+echo ""
+echo "4"
+./client -l $1 -k paperino -p -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ../lib/libchatty.a:minni
 
-./client -l $1 -k pippo -p -s listener.o:minni
+echo ""
+echo ""
+echo "5"
+./client -l $1 -k pippo -p -s ../lib/libchatty.a:minni
 
 # invio il segnale per generare le statistiche
 kill -USR1 $pid

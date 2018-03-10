@@ -100,10 +100,10 @@ bool delete( hashtable_t *users, char *nick )
 {
 	bool out = false;
 	pthread_mutex_lock( &users->ht_lock );
-	if( search( users, nick ) != NULL )
-	{
-		out = removing( users, nick );
-	}
+		if( search( users, nick ) != NULL )
+		{
+			out = removing( users, nick );
+		}
 	pthread_mutex_unlock( &users->ht_lock );
 
 	return out;

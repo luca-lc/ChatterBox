@@ -81,6 +81,15 @@ pthread_mutex_t lock_pool = PTHREAD_MUTEX_INITIALIZER;
 									FUNTIONS
 ******************************************************************************/
 /**
+ * 
+ */
+void killth( int sig )
+{
+	pthread_exit( NULL );
+}
+
+
+/**
  * @brief		function to extract from queue the first task added and run it
  * @var	pool	pointer to thread pool to can extract the task and its args
  */
@@ -95,7 +104,6 @@ void thread_work( threadpool_t *pool )
 
 		while( pool->task->head->ptr == NULL )
 		{
-//			printf( "WAITING...\n" );
 			pthread_cond_wait( &(pool->cond_t), &(pool->lock_t) );
 		}
 
@@ -282,6 +290,7 @@ int threadpool_free( threadpool_t *pool )
  */
 int threadpool_destroy( threadpool_t *pool, int power_off )
 {
+	signal( SIGUSR2, killth );
     int err = 0;
 
     if(pool == NULL)
@@ -321,7 +330,7 @@ int threadpool_destroy( threadpool_t *pool, int power_off )
 		//kill all worker thread
 		for( int i = 0; i < _THREADn; i++ )
 		{
-			if( (err = pthread_kill( pool->thread[i], SIGHUP )) != 0 )
+			if( (err = pthread_cancel( pool->thread[i] )) != 0 )
 			{
 				err = err * -1;
 			}

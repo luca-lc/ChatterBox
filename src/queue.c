@@ -97,33 +97,32 @@ queue_t *initialQueue()
  */
 int push( queue_t *q, void *new_data )
 {
-	if( q->tail->ptr == NULL )
-	{
-		pthread_mutex_lock( &q->queue_lock );
-			q->tail->ptr = new_data;
-			q->tail->next = NULL;
-			q->tail->prev = NULL;
-			q->queue_len += 1;
-		pthread_mutex_unlock( &q->queue_lock );
-	}
-	else
-	{
-		node_t *newn = NULL;
-		if( (newn = ( node_t * )malloc( sizeof( node_t ) )) == NULL )
+	pthread_mutex_lock( &q->queue_lock );
+		if( q->tail->ptr == NULL )
 		{
-			return -1;
+				q->tail->ptr = new_data;
+				q->tail->next = NULL;
+				q->tail->prev = NULL;
+				q->queue_len += 1;
 		}
+		else
+		{
+			node_t *newn = NULL;
+			if( (newn = ( node_t * )malloc( sizeof( node_t ) )) == NULL )
+			{
+				pthread_mutex_unlock( &q->queue_lock );
+				return -1;
+			}
 
-		newn->ptr = new_data;
-		newn->next = NULL;
+			newn->ptr = new_data;
+			newn->next = NULL;
 
-		pthread_mutex_lock( &q->queue_lock );
-			q->tail->next = newn;
-			q->tail->next->prev = q->tail;
-			q->tail = newn;
-			q->queue_len += 1;
-		pthread_mutex_unlock( &q->queue_lock );
-	}
+				q->tail->next = newn;
+				q->tail->next->prev = q->tail;
+				q->tail = newn;
+				q->queue_len += 1;
+		}
+	pthread_mutex_unlock( &q->queue_lock );
 
 	return 0;
 }
@@ -138,14 +137,14 @@ int push( queue_t *q, void *new_data )
 void *pull( queue_t *q )
 {
 	void *ret = NULL;
-	if( q->head != NULL )
-	{
-		if( q->head->ptr != NULL )
+	pthread_mutex_lock( &q->queue_lock );
+		if( q != NULL && q->head != NULL )
 		{
-			node_t *tmp = NULL;
-			if( q->head->next == NULL )
+			if( q->head->ptr != NULL )
 			{
-				pthread_mutex_lock( &q->queue_lock );
+				node_t *tmp = NULL;
+				if( q->head->next == NULL )
+				{
 					tmp = q->head;
 
 					q->head = ( node_t * )malloc( sizeof( node_t ) );
@@ -154,23 +153,21 @@ void *pull( queue_t *q )
 					q->head->prev = NULL;
 					q->tail = q->head;
 					q->queue_len = 0;
-				pthread_mutex_unlock( &q->queue_lock );
-			}
-			else
-			{
-				pthread_mutex_lock( &q->queue_lock );
+				}
+				else
+				{
 					tmp = q->head;
 
 					q->head = q->head->next;
 					q->head->prev = NULL;
 					q->queue_len -= 1;
-				pthread_mutex_unlock( &q->queue_lock );
-			}
+				}
 
-			ret = tmp->ptr;
-			free( tmp );
+				ret = tmp->ptr;
+				free( tmp );
+			}
 		}
-	}
+	pthread_mutex_unlock( &q->queue_lock );
 
 	return ret;
 }
@@ -182,59 +179,57 @@ void *pull( queue_t *q )
  */
 int remove_node( queue_t *q, node_t *rm )
 {
-	if( rm != NULL && rm->ptr != NULL )
-	{
-		if( rm->prev == NULL )
+	pthread_mutex_lock( &q->queue_lock );
+
+		if( rm != NULL && rm->ptr != NULL )
 		{
-			if( rm->next == NULL )
+			if( rm->prev == NULL )
 			{
-				pthread_mutex_lock( &q->queue_lock );
-					free( rm );
-					q->head = ( node_t * )malloc( sizeof( node_t ) );
-					q->head->ptr = NULL;
-					q->head->next = NULL;
-					q->head->prev = NULL;
-					q->tail = q->head;
-					q->queue_len = 0;
-				pthread_mutex_unlock( &q->queue_lock );
+				if( rm->next == NULL )
+				{
+						free( rm );
+						q->head = ( node_t * )malloc( sizeof( node_t ) );
+						q->head->ptr = NULL;
+						q->head->next = NULL;
+						q->head->prev = NULL;
+						q->tail = q->head;
+						q->queue_len = 0;
+				}
+				else
+				{
+						q->head = q->head->next;
+						q->head->prev = NULL;
+						q->queue_len -= 1;
+						free( rm );
+				}
 			}
 			else
 			{
-				pthread_mutex_lock( &q->queue_lock );
-					q->head = q->head->next;
-					q->head->prev = NULL;
-					q->queue_len -= 1;
-					free( rm );
-				pthread_mutex_unlock( &q->queue_lock );
+				if( rm->next == NULL )
+				{
+						q->tail = q->tail->prev;
+						q->tail->next = NULL;
+						q->queue_len -= 1;
+						free( rm );
+				}
+				else
+				{
+						rm->prev->next = rm->next;
+						rm->next->prev = rm->prev;
+						q->queue_len -= 1;
+						free( rm );
+				}
 			}
+	pthread_mutex_unlock( &q->queue_lock );
+
+		return 1;
 		}
 		else
 		{
-			if( rm->next == NULL )
-			{
-				pthread_mutex_lock( &q->queue_lock );
-					q->tail = q->tail->prev;
-					q->tail->next = NULL;
-					q->queue_len -= 1;
-					free( rm );
-				pthread_mutex_unlock( &q->queue_lock );
-			}
-			else
-			{
-				pthread_mutex_lock( &q->queue_lock );
-					rm->prev->next = rm->next;
-					rm->next->prev = rm->prev;
-					q->queue_len -= 1;
-					free( rm );
-				pthread_mutex_unlock( &q->queue_lock );
-			}
-		}
-		return 1;
-	}
-	else
-	{
+	pthread_mutex_unlock( &q->queue_lock );
+
 		return 0;
-	}
+		}
 }
 
 

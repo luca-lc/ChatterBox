@@ -43,6 +43,7 @@ typedef struct us
 	int fd_online;
 	queue_t *chats;
 	queue_t *mygroup;
+	pthread_mutex_t us_lock;
 }user_t;
 
 

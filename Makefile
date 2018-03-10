@@ -39,6 +39,8 @@ SOURCE_DIR		= ./src
 BIN_DIR			= ./bin
 LIB_DIR			= ./lib
 
+#-fsanitize=thread
+
 CC		=  gcc
 AR              =  ar
 CFLAGS	        += -std=c99 -Wall -pedantic -g -DMAKE_VALGRIND_HAPPY

@@ -17,12 +17,13 @@ pid=$!
 for((i=0;i<50;++i)); do 
     ./client -l $1 -k pippo -S "ciao":pluto; 
     ./client -l $1 -k pluto -S "ciao":pippo;  
-    ./client -l $1 -k minni -s "./client":pluto -s "./client":pippo; 
+    ./client -l $1 -k minni -s ./client:pluto -s ./client:pippo; 
 done
 
 # messaggio di errore che mi aspetto
 OP_MSG_TOOLONG=28
-
+echo ""
+echo "QUI"
 ./client -l $1 -k pippo -s ../lib/libchatty.a:pluto
 e=$?
 if [[ $((256-e)) != $OP_MSG_TOOLONG ]]; then
@@ -59,5 +60,3 @@ kill -TERM $pid
 
 echo "Test OK!"
 exit 0
-
-
