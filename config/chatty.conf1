@@ -28,7 +28,7 @@ MaxMsgSize       = 512
 MaxFileSize      = 2048
 
 # numero massimo di messaggi che il server 'ricorda' per ogni client
-MaxHistMsgs      = 50
+MaxHistMsgs      = 400
 
 # directory dove memorizzare i files da inviare agli utenti 
 DirName          = /tmp/chatty 

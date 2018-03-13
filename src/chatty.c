@@ -410,137 +410,15 @@ void clear_chat( queue_t *chat )
 /**
  *
  */
-/*void openFile( struct of_arg *arg )
-{
-	char 			*path = arg->path;
-	int 			oldlen = strlen( path );
-	int				dirlen = strlen( Dir );
-	int				namelen;
-	int 			exe = 0;
-	char 			*filename;
-	char			*newfile;
-	char			ext[10];
-	FILE 			*fp;
-	struct stat		ef;
-
-	//name trimming
-	while( path[oldlen] != '/' )
-		{
-			if( path[oldlen] == '.' )
-				{
-					exe = oldlen;
-				}
-			oldlen--;
-		}
-
-	int tmp = strlen( path ) - oldlen;
-	int sizeexe = strlen( path ) - exe;
-	namelen = tmp - sizeexe;
-	
-	filename = ( char * )malloc( namelen * sizeof( char ) );
-	newfile = ( char * )malloc( (dirlen + namelen + sizeexe ) * sizeof( char ) );
-
-
-	//check if directory exists
-	DIR *chattydir = opendir( Dir );
-	if( !chattydir )
-		{
-			mkdir( Dir, 07755 ); //create directory
-		}
-
-	//if is a file
-	if( exe != 0 )
-		{
-			//RESET MEMORY SPACE
-			memset( &filename[0], 0, sizeof( filename ) );
-			memset( &newfile[0], 0, sizeof( newfile ) );
-			memset( &ext[0], 0, sizeof( ext ) );
-
-			//COPY FILE NAME IN AN ARRAY
-			int i = 0;
-			while( oldlen != exe )
-				{
-					filename[i] = path[oldlen];
-					oldlen++;
-					i++;
-				}
-			namelen = i;
-
-			//copy extension
-			memcpy( ext, path+exe, sizeexe );
-			// sprintf( ext, "%s", path+exe );
-
-			int offset = 0;
-			memcpy( newfile + offset, Dir, dirlen );
-			
-			offset += dirlen;
-			memcpy( newfile+offset, filename, namelen );
-
-			offset += namelen;
-			memcpy( newfile+offset, ext, sizeexe );
-
-			int dim = offset + sizeexe;
-	
-			int already = 0;
-			while( stat( newfile, &ef ) != -1 )
-				{
-					already += 1;
-					
-					newfile = ( char * )realloc( newfile, dim + sizeof(char) + sizeof(int) );
-					
-					offset = dirlen + namelen;
-					memcpy( newfile+offset, "_", sizeof( char ) );
-					offset += sizeof( char );
-					
-					offset += sprintf( newfile+offset, "%d", already );
-
-					memcpy( newfile+offset, ext, sizeexe );
-				}
-				
-			path = ( char * )realloc( path, strlen( newfile ) );
-			memcpy( path, newfile, strlen( newfile ) );
-
-
-		}
-	else
-		{
-			sprintf( newfile, "%s%s", Dir, path+oldlen );
-			int len = strlen( newfile );
-			int already = 0;
-			while( stat( newfile, &ef ) != -1 )
-				{
-					already += 1;
-					sprintf( newfile+len, "_%d", already );
-				}
-			path = ( char *)realloc( path, strlen( newfile ) );
-			memcpy( path, newfile, strlen( newfile ) );
-
-		}
-
-	if( (fp = fopen( newfile, "w" )) == NULL )
-		{
-			perror( "fopen" );
-			pthread_mutex_lock( &chattyStats.statLock );
-				chattyStats.nerrors += 1;
-			pthread_mutex_unlock( &chattyStats.statLock );
-			return NULL;
-		}
-	
-	closedir( chattydir );
-	free( newfile );
-	free( filename );
-
-	arg->path = path;
-	arg->f = fp;
-}*/
 char *rename_f( char *old )
 {
-    struct stat fs;
-    char *new = NULL;
-    int dirlen = strlen( Dir );
-    int oldlen = strlen( old );
-    int st_name = oldlen;
-    int e = 0;
+    struct stat 	fs;
+    char 			*new = NULL;
+    int 			dirlen = strlen( Dir );
+    int 			oldlen = strlen( old );
+    int 			st_name = oldlen;
+    int 			e = 0;
+	int				slash = 0;
 
     DIR *chDir = opendir( Dir );
     if( !chDir )
@@ -556,7 +434,6 @@ char *rename_f( char *old )
                     e = st_name;
                 }
             st_name -= 1;
-
         }
         
     if( e != 0 )
@@ -567,8 +444,7 @@ char *rename_f( char *old )
                 }
             if( old[st_name] != '/' && Dir[dirlen-1] != '/' )
                 {
-                    st_name--;
-                    old[st_name] = '/';
+                    slash = 1;
                 }
                 
             int cn = oldlen - st_name;
@@ -578,8 +454,15 @@ char *rename_f( char *old )
             char name[sn+1];
             strncpy( name, old+st_name, sn );
             name[sn] = '\0';
-            new = ( char * )malloc( (dirlen+sn+se+1) * sizeof( char ) );
-            sprintf( new, "%s%s", Dir, old+st_name );
+            new = ( char * )malloc( (dirlen+slash+sn+se+1) * sizeof( char ) );
+            if( slash )
+				{
+					sprintf( new, "%s/%s", Dir, old+st_name );
+				}
+			else
+				{
+					sprintf( new, "%s%s", Dir, old+st_name );
+				}
 
             int already = 0;
             while( stat( new, &fs ) != -1 )
@@ -588,8 +471,16 @@ char *rename_f( char *old )
                     char nnew[17];
                     sprintf( nnew, "_%d", already );
                     int lennnew = strlen( nnew ); 
-                    new = (char *)realloc( new, (dirlen+sn+se+lennnew+1) * sizeof( new ) );
-                    sprintf( new, "%s%s%s%s", Dir, name, nnew, old+e);
+                    new = (char *)realloc( new, (dirlen+slash+sn+se+lennnew+1) * sizeof( new ) );
+                    
+					if( slash )
+						{
+							sprintf( new, "%s/%s%s%s", Dir, name, nnew, old+e);
+						}
+					else
+						{
+							sprintf( new, "%s%s%s%s", Dir, name, nnew, old+e);
+						}
 
                 }
         }
@@ -601,8 +492,7 @@ char *rename_f( char *old )
                 }
             if( old[st_name] != '/' && Dir[dirlen-1] != '/' )
                 {
-                    st_name--;
-                    old[st_name] = '/';
+					slash = 1;
                 }
 
             int sn = oldlen - st_name;
@@ -612,8 +502,16 @@ char *rename_f( char *old )
             strncpy( name, old+st_name, sn );
             name[sn] = '\0';
 
-            new = ( char * )malloc( (dirlen+sn) * sizeof( char ) );
-            sprintf( new, "%s%s", Dir, old+st_name );
+            new = ( char * )malloc( (dirlen+slash+sn) * sizeof( char ) );
+			
+			if( slash )
+				{
+					sprintf( new, "%s/%s", Dir, old+st_name );
+				}
+			else
+            	{
+					sprintf( new, "%s%s", Dir, old+st_name );
+				}
 
 
             int already = 0;
@@ -623,11 +521,21 @@ char *rename_f( char *old )
                     char nnew[17];
                     sprintf( nnew, "_%d", already );
                     int lennnew = strlen( nnew );
-                    new = (char *)realloc( new, (dirlen+sn+lennnew+1) * sizeof( new ) );
-                    sprintf( new, "%s%s%s", Dir, name, nnew );
+                    new = (char *)realloc( new, (dirlen+slash+sn+lennnew+1) * sizeof( new ) );
+                    
+					if( slash )
+						{
+							sprintf( new, "%s/%s%s", Dir, name, nnew );
+						}
+					else
+						{
+							sprintf( new, "%s%s%s", Dir, name, nnew );
+						}
 
                 }
-       }
+       } 
+	printf( "\n<< %s >>\n", new );
+	//    sleep( 5 );
     return new;
 }
 
@@ -692,7 +600,8 @@ void requests_handler( void *args )
 		//===================================================================//
 					case REGISTER_OP :
 						{
-							int ack_reg = 0;
+printf( "REG << %s >>\n", msg.hdr.sender );
+						 	int ack_reg = 0;
 							ack_reg = checkin( users, msg.hdr.sender );
 							
 							//IF THE USER HAS BEEN REGISTERED
@@ -745,12 +654,14 @@ void requests_handler( void *args )
 
 									STOP = true;
 								}
+printf( "REGout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
 					case CONNECT_OP :
 						{
 							me = connecting( users, msg.hdr.sender );
+printf( "CONN << %s >>\n", me->nickname );
 							if( me != NULL ) //if the user is logged on
 								{
 									if( users->active_user == NULL )
@@ -811,13 +722,14 @@ void requests_handler( void *args )
 
 									STOP = true;
 								}
+printf( "CONNout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
 					case USRLIST_OP :
 						{
 							me = connecting( users, msg.hdr.sender );
-
+printf( "ULST << %s >>\n", me->nickname );
 							//SET USER LIST TO SEND
 							sendUlist( users->active_user, &msg, me, buff ); //set the data in this function
 							setHeader( &msg.hdr, OP_OK, "ChattyServer" );
@@ -833,12 +745,14 @@ void requests_handler( void *args )
 								{
 									free( msg.data.buf );
 								}
+printf( "ULSTout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
 					case DISCONNECT_OP :
 						{
 							me = connecting( users, msg.hdr.sender );
+printf( "DISC << %s >>\n", me->nickname );
 							if( me != NULL )
 								{
 									me->fd_online = -1;
@@ -892,15 +806,15 @@ void requests_handler( void *args )
 									{
 										free( msg.data.buf );
 									}
-
-
 							sendHeader( c_fd, &msg.hdr );
+printf( "DISCout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
 					case UNREGISTER_OP :
 						{
 							me = connecting( users, msg.hdr.sender );
+printf( "UNREG << %s >>\n", me->nickname );
 							if( me != NULL )
 								{
 									pthread_mutex_lock( &main_l );
@@ -975,6 +889,7 @@ void requests_handler( void *args )
 								{
 									free( msg.data.buf );
 								}
+printf( "UNREGout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
@@ -1256,7 +1171,7 @@ void requests_handler( void *args )
 
 							user_t *recvr = connecting( users, msg.data.hdr.receiver );
 							me = connecting( users, msg.hdr.sender );
-
+printf( "TXT << %s >>\n", me->nickname );
 							if( me != NULL && (recvr != NULL || g != NULL ) )
 								{
 
@@ -1462,13 +1377,14 @@ void requests_handler( void *args )
 								{
 									free( msg.data.buf );
 								}
+printf( "TXTout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
 					case POSTTXTALL_OP :
 						{
 							me = connecting( users, msg.hdr.sender );
-
+printf( "ALL << %s >>\n", me->nickname );
 							if( me != NULL )
 								{
 									if( msg.data.hdr.len > _MSGSIZE )
@@ -1520,6 +1436,7 @@ void requests_handler( void *args )
 								{
 									free( msg.data.buf );
 								}
+printf( "ALLout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
@@ -1528,7 +1445,7 @@ void requests_handler( void *args )
 							user_t *recvr = connecting( users, msg.data.hdr.receiver );
 							me = connecting( users, msg.hdr.sender );
                             FILE *_f_tmp;
-
+printf( "FILE << %s >>\n", me->nickname );
 							pthread_mutex_lock( &users->ht_lock );
 								group_chat_t *g = searchGroup( users, msg.data.hdr.receiver );
 							pthread_mutex_unlock( &users->ht_lock );
@@ -1538,7 +1455,7 @@ void requests_handler( void *args )
 									if( msg.data.hdr.len > _MSGSIZE )
 										{
 											setHeader( &msg.hdr, OP_MSG_TOOLONG, "ChattyServer" );
-
+											sendHeader( c_fd, &msg.hdr );
 											pthread_mutex_lock( &chattyStats.statLock );
 												chattyStats.nerrors += 1;
 											pthread_mutex_unlock( &chattyStats.statLock );
@@ -1594,6 +1511,7 @@ void requests_handler( void *args )
 																	if( file.hdr.len > _FILESIZE )
 																		{
 																			setHeader( &msg.hdr, OP_MSG_TOOLONG, "ChattyServer" );
+																			sendHeader( c_fd, &msg.hdr );
 																			close( _f_tmp );
 																		}
 																	else
@@ -1784,16 +1702,18 @@ void requests_handler( void *args )
 								{
 									free( msg.data.buf );
 								}
+printf( "FILEout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
 					case GETPREVMSGS_OP : 
 						{
 							me = connecting( users, msg.hdr.sender );
+printf( "MSGPREV << %s >>\n", me->nickname );
 							if( me != NULL )
 								{
-										buff = ( char * )malloc( sizeof(int) * sizeof( char ) );
-										memset( &buff[0], 0, sizeof( buff ) );
+										buff = ( char * )malloc( sizeof( size_t ) );
+										// memset( &buff[0], 0, sizeof( int ) );
 										memcpy( buff, &me->chats->queue_len, sizeof( int ) );
 
 										setData( &msg.data, me->nickname, buff, sizeof( int ) );
@@ -1847,6 +1767,7 @@ void requests_handler( void *args )
 
 									STOP = true;
 								}
+printf( "MSGPREVout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
@@ -1911,7 +1832,7 @@ void requests_handler( void *args )
 					case GETFILE_OP :
 						{
 							me = connecting( users, msg.hdr.sender );
-
+printf( "MSGFILE << %s >>\n", me->nickname );
 							if( me != NULL )
 								{
 									struct stat sf;
@@ -1979,6 +1900,7 @@ void requests_handler( void *args )
 								{
 									free( msg.data.buf );
 								}
+printf( "MSGFILEout << %s >>\n", me->nickname );
 						}break;
 		//=============================================================================================//
 		//=============================================================================================//
