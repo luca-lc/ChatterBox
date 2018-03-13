@@ -18,8 +18,8 @@ fi
 wait
 
 # minni deve ricevere 8 messaggi prima di terminare
-./client -l $1 -k minni -R 8 &
-pid=$!
+# ./client -l $1 -k minni -R 8 &
+# pid=$!
 
 # aspetto un po' per essere sicuro che il client sia partito
 sleep 1
@@ -135,7 +135,7 @@ echo "10"
 if [[ $? != 0 ]]; then
     exit 1
 fi
-
+sleep 5
 # controllo che i file siano arrivati al server e che siano corretti
 md51=$(md5sum ./client | cut -d " " -f 1)
 md52=$(md5sum ./chatty | cut -d " " -f 1)

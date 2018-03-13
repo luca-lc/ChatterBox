@@ -39,7 +39,11 @@ char *trim (char * s)
     }
 
     /* Copy finished string */
-    strcpy (s, s1);
+    char st[strlen(s)];
+    memset( st+0, 0, strlen(s) );
+    strcpy(st, s1);
+    memset( s+0, 0, strlen( s ) );
+    strcpy(s, st);
     return s;
 }
 

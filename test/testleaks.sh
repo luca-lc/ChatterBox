@@ -6,7 +6,7 @@ if [[ $# != 1 ]]; then
 fi
 
 rm -f valgrind_out
-/usr/bin/valgrind --leak-check=full ./chatty -f ../config/chatty.conf1 >& ./valgrind_out &
+/usr/bin/valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=all --track-origins=yes ./chatty -f ../config/chatty.conf1 >& ./valgrind_out &
 pid=$!
 
 # exit 0
@@ -45,10 +45,12 @@ echo "2"
 ./client -l $1 -k qua -S "Ciao a tutti, io ricevo e basta": -R -1 &
 pid2=$!
 
+
 echo ""
 echo ""
 echo "3"
 ./client -l $1 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s ./client:minni -s ./chatty:qua 
+
 
 echo ""
 echo ""

@@ -83,20 +83,20 @@ hashtable_t *initTable( unsigned int length )
 {
 	hashtable_t *table;
 	//creation table
-	if( (table = ( hashtable_t * )malloc( sizeof( hashtable_t ) )) == NULL )
+	if( (table = ( hashtable_t * )malloc( sizeof( struct ht ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to create hash table" );
 		return NULL;
 	}
 	//creation cell
-	if( (table->users = ( ht_elem_t * )malloc( length * sizeof( ht_elem_t ) )) == NULL )
+	if( (table->users = ( ht_elem_t * )malloc( length * sizeof( struct elem ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to create elements in hash table" );
 		free( table );
 		return NULL;
 	}
 
-	if( (table->groups = ( ht_G_t * )malloc( length * sizeof( ht_G_t ) )) == NULL )
+	if( (table->groups = ( ht_G_t * )malloc( length * sizeof( struct gr ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to create elements in hash table" );
 		free( table->users );
@@ -111,7 +111,6 @@ hashtable_t *initTable( unsigned int length )
 		table->users[i].collision = NULL;
 		table->groups[i].group = NULL;
 		table->groups[i].collision = NULL;
-
 	}
 
 	//init elem table
@@ -140,7 +139,7 @@ bool insert( hashtable_t *table, char *name )
 
 	if( table->users[val].user == NULL )
 	{
-		if( (table->users[val].user = (user_t *)malloc( sizeof( user_t ) )) == NULL )
+		if( (table->users[val].user = ( user_t * )malloc( sizeof( struct us ) )) == NULL )
 		{
 			return false;
 		}
@@ -165,7 +164,7 @@ bool insert( hashtable_t *table, char *name )
 		}
 
 		user_t *tmp;
-		if( (tmp = (user_t *)malloc( sizeof( user_t ) )) == NULL )
+		if( (tmp = ( user_t * )malloc( sizeof( user_t ) )) == NULL )
 		{
 			return false;
 		}
@@ -209,7 +208,7 @@ bool addGroup( hashtable_t *table, char *name )
 
 	if( table->groups[val].group == NULL )
 	{
-		if( (table->groups[val].group = (group_chat_t *)malloc( sizeof( group_chat_t ) )) == NULL )
+		if( (table->groups[val].group = (group_chat_t *)malloc( sizeof( struct grp_msg ) )) == NULL )
 		{
 			return false;
 		}
@@ -229,7 +228,7 @@ bool addGroup( hashtable_t *table, char *name )
 		}
 
 		group_chat_t *tmp;
-		if( (tmp = (group_chat_t *)malloc( sizeof( group_chat_t ) )) == NULL )
+		if( (tmp = (group_chat_t *)malloc( sizeof( struct grp_msg ) )) == NULL )
 		{
 			return false;
 		}

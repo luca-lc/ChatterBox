@@ -334,7 +334,7 @@ static int execute_receive(int connfd, operation_t *o) {
 	    printf("[Il file '%s' e' stato scaricato correttamente]\n",filename);
 	} break;
 	default: {
-	    fprintf(stderr, "ERRORE: ricevuto messaggio non valido\n-->\t%d\n\n", msg.hdr.op);
+	    fprintf(stderr, "ERRORE: ricevuto messaggio non valido\n");
 	    return -1;
 	}
 	}	    

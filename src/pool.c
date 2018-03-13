@@ -141,7 +141,7 @@ void thread_work( threadpool_t *pool )
 threadpool_t *pool_creation( )
 {
 	threadpool_t *pool;
-	if( (pool = ( threadpool_t * )malloc( sizeof( threadpool_t ) )) == NULL )
+	if( (pool = ( threadpool_t * )malloc( sizeof( struct pool ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to allocate space for threadpool" );
 		return NULL;
@@ -347,7 +347,6 @@ int threadpool_destroy( threadpool_t *pool, int power_off )
 			}
 		}
 	}
-
 
 
     //only if all ok deallocates the pool

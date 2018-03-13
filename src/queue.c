@@ -108,7 +108,7 @@ int push( queue_t *q, void *new_data )
 		else
 		{
 			node_t *newn = NULL;
-			if( (newn = ( node_t * )malloc( sizeof( node_t ) )) == NULL )
+			if( (newn = ( node_t * )malloc( sizeof( struct node ) )) == NULL )
 			{
 				pthread_mutex_unlock( &q->queue_lock );
 				return -1;
