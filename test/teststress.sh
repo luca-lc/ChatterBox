@@ -31,6 +31,11 @@ wait $clientpid
 
 for ((i=0;i<12;++i)); do 
 
+    echo ""
+    echo ""
+    echo ""
+    echo "LOOP $i"
+    echo ""
     # si fa lo spawn di un certo numero di processi ognuno che esegue una sequenza di operazioni con differente velocita'
 
     ./client -l $1 -t 200 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s ./client:minni -s ./chatty:qua -p -R 1 &
@@ -38,11 +43,25 @@ for ((i=0;i<12;++i)); do
     ./client -l $1 -t 300 -k pluto -R 1  -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ../lib/libchatty.a:minni -p &
     ./client -l $1 -t 300 -k qui -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":pluto -S "bbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": -p &
     ./client -l $1 -t 500 -k quo -L -p -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":pluto -S "bbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": &
-    # ./client -l $1 -t 500 -k pippo -L -s chatty.o:qua -s client:qua -s ../lib/libchatty.a:qua -p &
+    ./client -l $1 -t 500 -k pippo -L -s ./chatty.o:qua -s ./client:qua -s ../lib/libchatty.a:qua -p &
     ./client -l $1 -t 200 -k qua -R 2 -s ../config/chatty.conf1:pippo -S "aaaaaaaaaaaaaaaaaaaaaaaaaa":pippo -S "bbbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": &
     ./client -l $1 -t 100 -k minni -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":qua -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ../lib/libchatty.a:pluto -p &
     ./client -l $1 -t 300 -k "zio paperone" -S "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":clarabella -S "bbbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -p &
-    ./client -l $1 -t 100 -k clarabella -S "bbbbbbbbbbbbbbbbbbbbbbbbbbbbb": -R 1 -s chatty:minni -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": -p &
+    ./client -l $1 -t 100 -k clarabella -S "bbbbbbbbbbbbbbbbbbbbbbbbbbbbb": -R 1 -s ./chatty:minni -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": -p &
+#-s ./chatty.o:pluto -s ./chatty.o:paperino
+
+    # ./client -l $1 -t 1000 -k topolino -s /home/luca/Desktop/Verona1.jpeg:minni -s ./chatty.o:minni -s ./chatty:qua &
+    # ./client -l $1 -t 600 -k paperino -s ./chatty.o:minni -s ./chatty.o:pluto -s ./chatty.o:topolino -s ../lib/libchatty.a:pluto -p &
+    # ./client -l $1 -t 300 -k pluto -s ./client:minni -s ./client:pluto -s ./client:topolino -s ../lib/libchatty.a:minni &
+    # ./client -l $1 -t 300 -k qui -s ../config/chatty.conf1:pluto &
+    # ./client -l $1 -t 500 -k quo -s ../config/chatty.conf1:pluto &
+    # ./client -l $1 -t 500 -k pippo -s ./chatty.o:qua -s ./client:qua -s ../lib/libchatty.a:qua -p &
+    # ./client -l $1 -t 200 -k qua -s ../config/chatty.conf1:pippo -s ../lib/libchatty:pippo &
+    # ./client -l $1 -t 100 -k minni -s ./chatty:qua -s ./chatty:pluto -s ./chatty:topolino -s ../lib/libchatty.a:pluto -p &
+    # ./client -l $1 -t 300 -k "zio paperone" -s ../config/chatty.conf1:clarabella &
+    # ./client -l $1 -t 100 -k clarabella -s ./chatty:minni &
+
+
 
     for((k=0;k<5;++k)); do 
         # questi comandi falliscono tutti
@@ -59,10 +78,17 @@ for ((i=0;i<12;++i)); do
     ./client -l $i -k utente1 -C utente1
     ./client -l $i -k utente2 -C utente2
 
+
     wait
 done
 
 #statistiche 
 killall -USR1 chatty
+
+
+echo ""
+echo ""
+echo ""
+echo "stat printed"
 
 

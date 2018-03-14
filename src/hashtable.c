@@ -149,6 +149,7 @@ bool insert( hashtable_t *table, char *name )
 		table->users[val].user->chats = initialQueue();
 
 		table->users[val].user->fd_online = -1;
+		table->users[val].user->alrdy_read = 0;
 
 		table->users[val].user->mygroup = initialQueue();
 
@@ -172,6 +173,7 @@ bool insert( hashtable_t *table, char *name )
 		strcpy(tmp->nickname, name);
 
 		tmp->fd_online = -1;
+		tmp->alrdy_read = 0;
 
 		tmp->chats = initialQueue();
 		tmp->mygroup = initialQueue();
@@ -406,7 +408,6 @@ bool removing( hashtable_t *table, char *name )
 
 
 		tmp->fd_online = -1;
-		memset( &table->users[val].user[0], 0, sizeof( table->users[val].user ) );
 		
 		table->users[val].user = NULL;
 
@@ -491,7 +492,6 @@ bool removingGroup( hashtable_t *table, char *name )
 		destroy_queue( tmp->participants );
 
 
-		memset( &table->groups[val].group[0], 0, sizeof( table->groups[val].group ) );
 		table->groups[val].group = NULL;
 		free( tmp );
 

@@ -285,13 +285,13 @@ int readData(long fd, message_data_t *data)
 	size_t size_buf = sizeof(data->hdr.len) + sizeof(data->hdr.receiver);
 	char *buff = NULL;
 
+
 	if( (buff = ( char * )malloc(size_buf * sizeof( char ))) == NULL )
 	{
 		perror( "malloc()" );
 		fprintf( stderr, "Problem to allocating space for buffer" );
 		return EXIT_FAILURE;
 	}
-
 
 	//receive the buffer
 	int left = size_buf, r = 0, s = 0;

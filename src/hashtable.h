@@ -41,6 +41,7 @@ typedef struct us
 {
 	char nickname[MAX_NAME_LENGTH];
 	int fd_online;
+	unsigned int alrdy_read;
 	queue_t *chats;
 	queue_t *mygroup;
 	pthread_mutex_t us_lock;
