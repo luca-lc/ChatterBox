@@ -49,7 +49,7 @@ pid2=$!
 echo ""
 echo ""
 echo "3"
-./client -l $1 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s ./client:minni -s ./chatty:qua 
+./client -l $1 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s ./client:minni -s ./chatty:qua
 
 
 echo ""
@@ -86,5 +86,3 @@ fi
 
 echo "Test OK!"
 exit 0
-
-

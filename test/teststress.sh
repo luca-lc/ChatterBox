@@ -27,9 +27,34 @@ clientpid+="$! "
 ./client -l $1 -c "clarabella" &
 clientpid+=$!
 
+./client -l $1 -k minni -g G1 &
+clientpid+="$! "
+./client -l $1 -k "clarabella" -a G1 &
+clientpid+=$!
+./client -l $1 -k qua -a G1 &
+clientpid+="$! "
+./client -l $1 -k pluto -a G1 &
+clientpid+="$! "
+./client -l $1 -k topolino -a G1 &
+clientpid+="$! "
+
+./client -l $1 -g paperino -g G2 &
+clientpid+="$! "
+./client -l $1 -k "zio paperone" -a G2 &
+clientpid+="$! "
+./client -l $1 -k qui -a G2 &
+clientpid+="$! "
+./client -l $1 -k quo -a G2 &
+clientpid+="$! "
+./client -l $1 -k pippo -a G2 &
+clientpid+="$! "
+
+
+
+
 wait $clientpid
 
-for ((i=0;i<12;++i)); do 
+for ((i=0;i<12;++i)); do
 
     echo ""
     echo ""
@@ -40,40 +65,26 @@ for ((i=0;i<12;++i)); do
 
     ./client -l $1 -t 200 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s ./client:minni -s ./chatty:qua -p -R 1 &
     ./client -l $1 -t 600 -k paperino -R 1  -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ../lib/libchatty.a:pluto -p &
-    ./client -l $1 -t 300 -k pluto -R 1  -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ../lib/libchatty.a:minni -p &
+    ./client -l $1 -t 300 -k pluto -R 1  -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ../lib/libchatty.a:minni -p -s connections.o:G1 &
     ./client -l $1 -t 300 -k qui -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":pluto -S "bbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": -p &
     ./client -l $1 -t 500 -k quo -L -p -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":pluto -S "bbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": &
     ./client -l $1 -t 500 -k pippo -L -s ./chatty.o:qua -s ./client:qua -s ../lib/libchatty.a:qua -p &
     ./client -l $1 -t 200 -k qua -R 2 -s ../config/chatty.conf1:pippo -S "aaaaaaaaaaaaaaaaaaaaaaaaaa":pippo -S "bbbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": &
     ./client -l $1 -t 100 -k minni -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":qua -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ../lib/libchatty.a:pluto -p &
-    ./client -l $1 -t 300 -k "zio paperone" -S "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":clarabella -S "bbbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -p &
+    ./client -l $1 -t 300 -k "zio paperone" -S "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":clarabella -S "bbbbbbbbbbbbbbbbbb": -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -p -s connections.o:G2 &
     ./client -l $1 -t 100 -k clarabella -S "bbbbbbbbbbbbbbbbbbbbbbbbbbbbb": -R 1 -s ./chatty:minni -S "ccccccccccccccccc": -S "ddddddddddddddddddddd": -S "eeeeeeeeeeeeeeeeeeeee": -S "fffffffffffffffff": -S "gggggggggggggggd": -S "hhhhhhhhhhhhh": -S "iiiiiiiiiiiiiiiiiiiiii": -S "llllllllllllllllll": -p &
-#-s ./chatty.o:pluto -s ./chatty.o:paperino
 
-    # ./client -l $1 -t 1000 -k topolino -s /home/luca/Desktop/Verona1.jpeg:minni -s ./chatty.o:minni -s ./chatty:qua &
-    # ./client -l $1 -t 600 -k paperino -s ./chatty.o:minni -s ./chatty.o:pluto -s ./chatty.o:topolino -s ../lib/libchatty.a:pluto -p &
-    # ./client -l $1 -t 300 -k pluto -s ./client:minni -s ./client:pluto -s ./client:topolino -s ../lib/libchatty.a:minni &
-    # ./client -l $1 -t 300 -k qui -s ../config/chatty.conf1:pluto &
-    # ./client -l $1 -t 500 -k quo -s ../config/chatty.conf1:pluto &
-    # ./client -l $1 -t 500 -k pippo -s ./chatty.o:qua -s ./client:qua -s ../lib/libchatty.a:qua -p &
-    # ./client -l $1 -t 200 -k qua -s ../config/chatty.conf1:pippo -s ../lib/libchatty:pippo &
-    # ./client -l $1 -t 100 -k minni -s ./chatty:qua -s ./chatty:pluto -s ./chatty:topolino -s ../lib/libchatty.a:pluto -p &
-    # ./client -l $1 -t 300 -k "zio paperone" -s ../config/chatty.conf1:clarabella &
-    # ./client -l $1 -t 100 -k clarabella -s ./chatty:minni &
-
-
-
-    for((k=0;k<5;++k)); do 
+    for((k=0;k<5;++k)); do
         # questi comandi falliscono tutti
 	./client -l $1 -k "utente$k" -S "ciao":
-	# statistiche 
+	# statistiche
 	killall -USR1 chatty
-    done    
+    done
 
     ./client -l $1 -c utente1
     ./client -l $1 -c utente2
     ./client -l $1 -k utente1 -R 5 -S connections.o:utente2 -p
-    ./client -l $1 -k utente2 -R 5 -p -S chatty.o:utente1 
+    ./client -l $1 -k utente2 -R 5 -p -S chatty.o:utente1
 
     ./client -l $i -k utente1 -C utente1
     ./client -l $i -k utente2 -C utente2
@@ -82,13 +93,5 @@ for ((i=0;i<12;++i)); do
     wait
 done
 
-#statistiche 
+#statistiche
 killall -USR1 chatty
-
-
-echo ""
-echo ""
-echo ""
-echo "stat printed"
-
-

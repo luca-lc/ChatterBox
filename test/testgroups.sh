@@ -90,7 +90,7 @@ OP_NICK_UNKNOWN=27
 ./client -l $1  -k qui -S "Ciao sono qui":gruppo1
 e=$?
 if [[ $((256-e)) != $OP_NICK_UNKNOWN ]]; then
-    echo "Errore non corrispondente $e" 
+    echo "Errore non corrispondente $e"
     exit 1
 fi
 
@@ -122,7 +122,7 @@ fi
 
 echo ""
 echo ""
-echo "13"   
+echo "13"
 ./client -l $1 -k minni -p
 if [[ $? != 0 ]]; then
     exit 1
@@ -153,5 +153,3 @@ fi
 
 echo "Test OK!"
 exit 0
-
-

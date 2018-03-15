@@ -24,50 +24,35 @@ wait
 # aspetto un po' per essere sicuro che il client sia partito
 sleep 1
 
-echo ""
-echo ""
-echo "0"
 # primo messaggio
 ./client -l $1 -k topolino -S "ciao da topolino":minni
 if [[ $? != 0 ]]; then
     exit 1
 fi
-echo ""
-echo ""
-echo "1"
-
 # secondo e terzo
 ./client -l $1 -k paperino -S "ciao da paperino":minni -S "ciao ciao!!!":minni
 if [[ $? != 0 ]]; then
     exit 1
 fi
-echo ""
-echo ""
-echo "2"
+
 # quarto
-./client -l $1 -k qui -S "ciao a tutti": 
+./client -l $1 -k qui -S "ciao a tutti":
 if [[ $? != 0 ]]; then
     exit 1
 fi
-echo ""
-echo ""
-echo "3"
+
 # quinto e sesto
 ./client -l $1 -k quo -S "ciao a tutti":  -S "ciao da quo":minni
 if [[ $? != 0 ]]; then
     exit 1
 fi
-echo ""
-echo ""
-echo "4"
+
 # settimo ed ottavo
 ./client -l $1 -k qua -S "ciao a tutti":  -S "ciao da qua":minni -p
 if [[ $? != 0 ]]; then
     exit 1
 fi
-echo ""
-echo ""
-echo ""
+
 wait $pid
 if [[ $? != 0 ]]; then
     echo "ESCO8"
@@ -77,60 +62,44 @@ fi
 # messaggio di errore che mi aspetto
 OP_NICK_ALREADY=26
 
-echo "5"
 # provo a ri-registrare pippo
 ./client -l $1 -c pippo
 e=$?
 if [[ $((256-e)) != $OP_NICK_ALREADY ]]; then
-    echo "Errore non corrispondente $e" 
+    echo "Errore non corrispondente $e"
     exit 1
 fi
 
-echo ""
-echo ""
-echo "6"
 # deregistro pippo
 ./client -l $1 -k pippo -C pippo
 if [[ $? != 0 ]]; then
     exit 1
 fi
 
-echo ""
-echo ""
-echo "7"
 # deregistro pluto
 ./client -l $1 -k pluto -C pluto
 if [[ $? != 0 ]]; then
     exit 1
 fi
 
-echo ""
-echo ""
-echo "8"
-
 # registro pippo
 ./client -l $1 -c pippo
 if [[ $? != 0 ]]; then
     exit 1
 fi
+
 # registro pluto
 ./client -l $1 -c pluto
 if [[ $? != 0 ]]; then
     exit 1
 fi
 
-echo ""
-echo ""
-echo "9"
-
 # pippo e pluto si scambiano files
 ./client -l $1 -k pippo -S "Ti mando un file":pluto -s ./client:pluto
 if [[ $? != 0 ]]; then
     exit 1
 fi
-echo ""
-echo ""
-echo "10"
+
 ./client -l $1 -k pluto -S "Ti mando un file":pippo -s ./chatty:pippo -s ../lib/libchatty.a:pippo
 if [[ $? != 0 ]]; then
     exit 1
@@ -159,5 +128,3 @@ fi
 
 echo "Test OK!"
 exit 0
-
-

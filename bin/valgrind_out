@@ -1,480 +1,405 @@
-==13523== Memcheck, a memory error detector
-==13523== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
-==13523== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
-==13523== Command: ./chatty -f ../config/chatty.conf1
-==13523== 
-==13523== Invalid read of size 8
-==13523==    at 0x4070E2: main (chatty.c:2364)
-==13523==  Address 0x5422888 is 8 bytes inside a block of size 24 free'd
-==13523==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408757: remove_node (queue.c:203)
-==13523==    by 0x4070D4: main (chatty.c:2361)
-==13523==  Block was alloc'd at
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408359: initialQueue (queue.c:74)
-==13523==    by 0x409192: initTable (hashtable.c:121)
-==13523==    by 0x4063C4: main (chatty.c:2045)
-==13523== 
-==13523== Thread 9:
-==13523== Argument 'size' of function malloc has a fishy (possibly negative) value: -1
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x4024FA: openFile (chatty.c:439)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid write of size 1
-==13523==    at 0x50C71D9: vsprintf (iovsprintf.c:43)
-==13523==    by 0x50AC9C6: sprintf (sprintf.c:32)
-==13523==    by 0x40287E: openFile (chatty.c:506)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac42 is 0 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid read of size 1
-==13523==    at 0x4C30F74: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x40288D: openFile (chatty.c:507)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac42 is 0 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Syscall param stat(file_name) points to unaddressable byte(s)
-==13523==    at 0x514DBE5: _xstat (xstat.c:35)
-==13523==    by 0x4028ED: openFile (chatty.c:509)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac42 is 0 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid write of size 1
-==13523==    at 0x50D267B: _IO_default_xsputn (genops.c:450)
-==13523==    by 0x50A4240: vfprintf (vfprintf.c:1320)
-==13523==    by 0x50C71CA: vsprintf (iovsprintf.c:42)
-==13523==    by 0x50AC9C6: sprintf (sprintf.c:32)
-==13523==    by 0x4028D4: openFile (chatty.c:512)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac42 is 0 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid write of size 1
-==13523==    at 0x50D267B: _IO_default_xsputn (genops.c:450)
-==13523==    by 0x50A4DFF: vfprintf (vfprintf.c:1631)
-==13523==    by 0x50C71CA: vsprintf (iovsprintf.c:42)
-==13523==    by 0x50AC9C6: sprintf (sprintf.c:32)
-==13523==    by 0x4028D4: openFile (chatty.c:512)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac43 is 1 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid write of size 1
-==13523==    at 0x50C71D9: vsprintf (iovsprintf.c:43)
-==13523==    by 0x50AC9C6: sprintf (sprintf.c:32)
-==13523==    by 0x4028D4: openFile (chatty.c:512)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac44 is 2 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid read of size 1
-==13523==    at 0x4C30F74: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402901: openFile (chatty.c:514)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac42 is 0 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid read of size 1
-==13523==    at 0x4C30F74: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x40292C: openFile (chatty.c:515)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac42 is 0 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid read of size 2
-==13523==    at 0x4C32720: memcpy@@GLIBC_2.14 (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402948: openFile (chatty.c:515)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac42 is 0 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Syscall param open(filename) points to unaddressable byte(s)
-==13523==    at 0x514E05D: ??? (syscall-template.S:84)
-==13523==    by 0x50D0ACD: _IO_file_open (fileops.c:221)
-==13523==    by 0x50D0D34: _IO_file_fopen@@GLIBC_2.2.5 (fileops.c:328)
-==13523==    by 0x50C4D33: __fopen_internal (iofopen.c:86)
-==13523==    by 0x40295C: openFile (chatty.c:519)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x542ac42 is 0 bytes after a block of size 18 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid read of size 1
-==13523==    at 0x4C30F74: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x404D6D: requests_handler (chatty.c:1461)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5432d14 is 0 bytes after a block of size 20 alloc'd
-==13523==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402916: openFile (chatty.c:514)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid read of size 1
-==13523==    at 0x4C30F74: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x404D98: requests_handler (chatty.c:1462)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5432d14 is 0 bytes after a block of size 20 alloc'd
-==13523==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402916: openFile (chatty.c:514)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid read of size 1
-==13523==    at 0x4C30F74: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x404DBE: requests_handler (chatty.c:1463)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5432d14 is 0 bytes after a block of size 20 alloc'd
-==13523==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402916: openFile (chatty.c:514)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Source and destination overlap in strncpy(0x9827df8, 0x9827df8, 1)
-==13523==    at 0x4C31626: __strncpy_sse2_unaligned (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x401AE4: setData (message.h:126)
-==13523==    by 0x404DE5: requests_handler (chatty.c:1463)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Invalid read of size 1
-==13523==    at 0x4C30F74: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x404DF4: requests_handler (chatty.c:1464)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5432d14 is 0 bytes after a block of size 20 alloc'd
-==13523==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402916: openFile (chatty.c:514)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Thread 5:
-==13523== Syscall param socketcall.sendto(msg) points to uninitialised byte(s)
-==13523==    at 0x4E4A9FF: send (send.c:26)
-==13523==    by 0x407F45: sendData (connections.c:400)
-==13523==    by 0x405E9D: requests_handler (chatty.c:1849)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5446b91 is 1 bytes inside a block of size 73,784 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x405E30: requests_handler (chatty.c:1845)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Uninitialised value was created by a heap allocation
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x405E30: requests_handler (chatty.c:1845)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Thread 2:
-==13523== Invalid write of size 8
-==13523==    at 0x4C3453F: memset (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x405789: requests_handler (chatty.c:1697)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5492f00 is 0 bytes inside a block of size 4 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x405769: requests_handler (chatty.c:1696)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Thread 8:
-==13523== Syscall param stat(file_name) points to unaddressable byte(s)
-==13523==    at 0x514DBE5: _xstat (xstat.c:35)
-==13523==    by 0x4027E6: openFile (chatty.c:484)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5495237 is 0 bytes after a block of size 23 alloc'd
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402521: openFile (chatty.c:440)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Syscall param stat(file_name) points to uninitialised byte(s)
-==13523==    at 0x514DBE5: _xstat (xstat.c:35)
-==13523==    by 0x4027E6: openFile (chatty.c:484)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x549d309 is 25 bytes inside a block of size 28 alloc'd
-==13523==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x40271F: openFile (chatty.c:488)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Uninitialised value was created by a heap allocation
-==13523==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x40271F: openFile (chatty.c:488)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Conditional jump or move depends on uninitialised value(s)
-==13523==    at 0x4C30F78: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x4027FE: openFile (chatty.c:499)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Conditional jump or move depends on uninitialised value(s)
-==13523==    at 0x4C30F78: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402829: openFile (chatty.c:500)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== Syscall param open(filename) points to uninitialised byte(s)
-==13523==    at 0x514E05D: ??? (syscall-template.S:84)
-==13523==    by 0x50D0ACD: _IO_file_open (fileops.c:221)
-==13523==    by 0x50D0D34: _IO_file_fopen@@GLIBC_2.2.5 (fileops.c:328)
-==13523==    by 0x50C4D33: __fopen_internal (iofopen.c:86)
-==13523==    by 0x40295C: openFile (chatty.c:519)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x549d3c9 is 25 bytes inside a block of size 28 alloc'd
-==13523==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x40271F: openFile (chatty.c:488)
-==13523==    by 0x404D5E: requests_handler (chatty.c:1460)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
+==21709== Memcheck, a memory error detector
+==21709== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==21709== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==21709== Command: ./chatty -f ../config/chatty.conf1
+==21709== 
 
 
- Shutdown service
- ..............................................
- ................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
- ..............................................
- ..............................................
- ..............................................
- ..............................................
+ Shutdown ChattServer
+
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
+ ...................................................................................................
 
  BYE
 
-==13523== Thread 4:
-==13523== Invalid read of size 4
-==13523==    at 0x4E475A3: __condvar_cleanup1 (pthread_cond_wait.S:503)
-==13523==    by 0x40892D: thread_work (pool.c:107)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5422900 is 32 bytes inside a block of size 112 free'd
-==13523==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408DF1: threadpool_free (pool.c:278)
-==13523==    by 0x408F5D: threadpool_destroy (pool.c:355)
-==13523==    by 0x406F78: main (chatty.c:2320)
-==13523==  Block was alloc'd at
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408A17: pool_creation (pool.c:144)
-==13523==    by 0x40640F: main (chatty.c:2052)
-==13523== 
-==13523== Invalid read of size 4
-==13523==    at 0x4E45C14: __pthread_mutex_cond_lock (pthread_mutex_lock.c:67)
-==13523==    by 0x4E475CA: __condvar_cleanup1 (pthread_cond_wait.S:517)
-==13523==    by 0x40892D: thread_work (pool.c:107)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x5422900 is 32 bytes inside a block of size 112 free'd
-==13523==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408DF1: threadpool_free (pool.c:278)
-==13523==    by 0x408F5D: threadpool_destroy (pool.c:355)
-==13523==    by 0x406F78: main (chatty.c:2320)
-==13523==  Block was alloc'd at
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408A17: pool_creation (pool.c:144)
-==13523==    by 0x40640F: main (chatty.c:2052)
-==13523== 
-==13523== Invalid read of size 4
-==13523==    at 0x4E45C3B: __pthread_mutex_cond_lock (pthread_mutex_lock.c:80)
-==13523==    by 0x4E475CA: __condvar_cleanup1 (pthread_cond_wait.S:517)
-==13523==    by 0x40892D: thread_work (pool.c:107)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x54228f0 is 16 bytes inside a block of size 112 free'd
-==13523==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408DF1: threadpool_free (pool.c:278)
-==13523==    by 0x408F5D: threadpool_destroy (pool.c:355)
-==13523==    by 0x406F78: main (chatty.c:2320)
-==13523==  Block was alloc'd at
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408A17: pool_creation (pool.c:144)
-==13523==    by 0x40640F: main (chatty.c:2052)
-==13523== 
-==13523== Syscall param futex(futex) points to unaddressable byte(s)
-==13523==    at 0x4E4A26D: __lll_lock_wait (lowlevellock.S:135)
-==13523==    by 0x4E45C50: __pthread_mutex_cond_lock (pthread_mutex_lock.c:80)
-==13523==    by 0x4E475CA: __condvar_cleanup1 (pthread_cond_wait.S:517)
-==13523==    by 0x40892D: thread_work (pool.c:107)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523==  Address 0x54228f0 is 16 bytes inside a block of size 112 free'd
-==13523==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408DF1: threadpool_free (pool.c:278)
-==13523==    by 0x408F5D: threadpool_destroy (pool.c:355)
-==13523==    by 0x406F78: main (chatty.c:2320)
-==13523==  Block was alloc'd at
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408A17: pool_creation (pool.c:144)
-==13523==    by 0x40640F: main (chatty.c:2052)
-==13523== 
-==13523== 
-==13523== HEAP SUMMARY:
-==13523==     in use at exit: 8,410 bytes in 77 blocks
-==13523==   total heap usage: 542 allocs, 465 frees, 1,050,984 bytes allocated
-==13523== 
-==13523== Thread 1:
-==13523== 0 bytes in 15 blocks are definitely lost in loss record 1 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x4081E5: readMsg (connections.c:495)
-==13523==    by 0x402AB1: requests_handler (chatty.c:559)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== 90 bytes in 4 blocks are definitely lost in loss record 2 of 11
-==13523==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x404D82: requests_handler (chatty.c:1461)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== 96 bytes in 4 blocks are indirectly lost in loss record 3 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x408359: initialQueue (queue.c:74)
-==13523==    by 0x4092AF: insert (hashtable.c:154)
-==13523==    by 0x409EA8: checkin (signup.c:62)
-==13523==    by 0x402C5F: requests_handler (chatty.c:599)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== 352 (256 direct, 96 indirect) bytes in 4 blocks are definitely lost in loss record 4 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x4082F1: initialQueue (queue.c:67)
-==13523==    by 0x4092AF: insert (hashtable.c:154)
-==13523==    by 0x409EA8: checkin (signup.c:62)
-==13523==    by 0x402C5F: requests_handler (chatty.c:599)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== 352 bytes in 4 blocks are definitely lost in loss record 5 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x404D48: requests_handler (chatty.c:1458)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== 512 bytes in 1 blocks are definitely lost in loss record 6 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x409065: initTable (hashtable.c:99)
-==13523==    by 0x4063C4: main (chatty.c:2045)
-==13523== 
-==13523== 528 bytes in 6 blocks are definitely lost in loss record 7 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x404175: requests_handler (chatty.c:1178)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== 1,232 bytes in 14 blocks are definitely lost in loss record 8 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x401EEB: sendtoall (chatty.c:239)
-==13523==    by 0x404AD9: requests_handler (chatty.c:1396)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== 1,232 bytes in 14 blocks are definitely lost in loss record 9 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x402139: sendtoall (chatty.c:305)
-==13523==    by 0x404AD9: requests_handler (chatty.c:1396)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== 1,904 bytes in 7 blocks are possibly lost in loss record 10 of 11
-==13523==    at 0x4C2FB55: calloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x40138A4: allocate_dtv (dl-tls.c:322)
-==13523==    by 0x40138A4: _dl_allocate_tls (dl-tls.c:539)
-==13523==    by 0x4E4226E: allocate_stack (allocatestack.c:588)
-==13523==    by 0x4E4226E: pthread_create@@GLIBC_2.2.5 (pthread_create.c:539)
-==13523==    by 0x408B9E: pool_creation (pool.c:177)
-==13523==    by 0x40640F: main (chatty.c:2052)
-==13523== 
-==13523== 2,208 bytes in 4 blocks are still reachable in loss record 11 of 11
-==13523==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==13523==    by 0x50C4CDC: __fopen_internal (iofopen.c:69)
-==13523==    by 0x405DA8: requests_handler (chatty.c:1833)
-==13523==    by 0x4089F4: thread_work (pool.c:128)
-==13523==    by 0x4E416B9: start_thread (pthread_create.c:333)
-==13523== 
-==13523== LEAK SUMMARY:
-==13523==    definitely lost: 4,202 bytes in 62 blocks
-==13523==    indirectly lost: 96 bytes in 4 blocks
-==13523==      possibly lost: 1,904 bytes in 7 blocks
-==13523==    still reachable: 2,208 bytes in 4 blocks
-==13523==         suppressed: 0 bytes in 0 blocks
-==13523== 
-==13523== For counts of detected and suppressed errors, rerun with: -v
-==13523== ERROR SUMMARY: 105 errors from 39 contexts (suppressed: 0 from 0)
+==21709== Thread 11:
+==21709== Invalid read of size 4
+==21709==    at 0x4E474E1: __condvar_cleanup1 (pthread_cond_wait.S:400)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422918 is 56 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 4
+==21709==    at 0x4E474FE: __condvar_cleanup1 (pthread_cond_wait.S:420)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422944 is 100 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 8
+==21709==    at 0x4E47507: __condvar_cleanup1 (pthread_cond_wait.S:427)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422920 is 64 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 8
+==21709==    at 0x4E4750B: __condvar_cleanup1 (pthread_cond_wait.S:428)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422928 is 72 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 8
+==21709==    at 0x4E47511: __condvar_cleanup1 (pthread_cond_wait.S:430)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422928 is 72 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 8
+==21709==    at 0x4E47518: __condvar_cleanup1 (pthread_cond_wait.S:432)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422930 is 80 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 4
+==21709==    at 0x4E4751C: __condvar_cleanup1 (pthread_cond_wait.S:434)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422940 is 96 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 8
+==21709==    at 0x4E47522: __condvar_cleanup1 (pthread_cond_wait.S:438)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422920 is 64 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 4
+==21709==    at 0x4E4755C: __condvar_cleanup1 (pthread_cond_wait.S:462)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422918 is 56 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 8
+==21709==    at 0x4E47580: __condvar_cleanup1 (pthread_cond_wait.S:483)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422938 is 88 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Thread 8:
+==21709== Invalid read of size 4
+==21709==    at 0x4E47374: pthread_cond_wait@@GLIBC_2.3.2 (pthread_cond_wait.S:193)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422918 is 56 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 4
+==21709==    at 0x4E4737E: pthread_cond_wait@@GLIBC_2.3.2 (pthread_cond_wait.S:201)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422944 is 100 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 8
+==21709==    at 0x4E47381: pthread_cond_wait@@GLIBC_2.3.2 (pthread_cond_wait.S:203)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422930 is 80 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 8
+==21709==    at 0x4E47385: pthread_cond_wait@@GLIBC_2.3.2 (pthread_cond_wait.S:205)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422928 is 72 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== Invalid read of size 4
+==21709==    at 0x4E47308: pthread_cond_wait@@GLIBC_2.3.2 (pthread_cond_wait.S:113)
+==21709==    by 0x40A5A8: thread_work (pool.c:107)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709==  Address 0x5422918 is 56 bytes inside a block of size 112 free'd
+==21709==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AA6C: threadpool_free (pool.c:278)
+==21709==    by 0x40ABD8: threadpool_destroy (pool.c:355)
+==21709==    by 0x407E1F: main (chatty.c:2620)
+==21709==  Block was alloc'd at
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40A692: pool_creation (pool.c:144)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== 
+==21709== HEAP SUMMARY:
+==21709==     in use at exit: 6,680 bytes in 76 blocks
+==21709==   total heap usage: 540 allocs, 464 frees, 1,195,116 bytes allocated
+==21709== 
+==21709== Thread 1:
+==21709== 0 bytes in 15 blocks are definitely lost in loss record 1 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x4090C0: readMsg (connections.c:495)
+==21709==    by 0x402C8A: requests_handler (chatty.c:593)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 24 bytes in 1 blocks are still reachable in loss record 2 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AC99: initialQueue (queue.c:74)
+==21709==    by 0x409AC0: insert (hashtable.c:179)
+==21709==    by 0x40B26D: checkin (signup.c:62)
+==21709==    by 0x402E48: requests_handler (chatty.c:635)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 24 bytes in 1 blocks are still reachable in loss record 3 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AFF8: remove_node (queue.c:191)
+==21709==    by 0x407FAD: main (chatty.c:2665)
+==21709== 
+==21709== 72 bytes in 3 blocks are indirectly lost in loss record 4 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AC99: initialQueue (queue.c:74)
+==21709==    by 0x409AC0: insert (hashtable.c:179)
+==21709==    by 0x40B26D: checkin (signup.c:62)
+==21709==    by 0x402E48: requests_handler (chatty.c:635)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 96 bytes in 4 blocks are indirectly lost in loss record 5 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AC99: initialQueue (queue.c:74)
+==21709==    by 0x4099F8: insert (hashtable.c:154)
+==21709==    by 0x40B26D: checkin (signup.c:62)
+==21709==    by 0x402E48: requests_handler (chatty.c:635)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 328 (256 direct, 72 indirect) bytes in 4 blocks are definitely lost in loss record 6 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AC31: initialQueue (queue.c:67)
+==21709==    by 0x409AC0: insert (hashtable.c:179)
+==21709==    by 0x40B26D: checkin (signup.c:62)
+==21709==    by 0x402E48: requests_handler (chatty.c:635)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 352 (256 direct, 96 indirect) bytes in 4 blocks are definitely lost in loss record 7 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40AC31: initialQueue (queue.c:67)
+==21709==    by 0x4099F8: insert (hashtable.c:154)
+==21709==    by 0x40B26D: checkin (signup.c:62)
+==21709==    by 0x402E48: requests_handler (chatty.c:635)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 352 bytes in 4 blocks are definitely lost in loss record 8 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x405239: requests_handler (chatty.c:1554)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 512 bytes in 1 blocks are definitely lost in loss record 9 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40978F: initTable (hashtable.c:99)
+==21709==    by 0x406EB0: main (chatty.c:2286)
+==21709== 
+==21709== 528 bytes in 6 blocks are definitely lost in loss record 10 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x4045B3: requests_handler (chatty.c:1246)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 968 bytes in 11 blocks are definitely lost in loss record 11 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x401E9B: sendtoall (chatty.c:239)
+==21709==    by 0x40503A: requests_handler (chatty.c:1500)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 1,144 bytes in 13 blocks are definitely lost in loss record 12 of 13
+==21709==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x402135: sendtoall (chatty.c:311)
+==21709==    by 0x40503A: requests_handler (chatty.c:1500)
+==21709==    by 0x40A66F: thread_work (pool.c:128)
+==21709==    by 0x4E416B9: start_thread (pthread_create.c:333)
+==21709== 
+==21709== 2,448 bytes in 9 blocks are possibly lost in loss record 13 of 13
+==21709==    at 0x4C2FB55: calloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21709==    by 0x40138A4: allocate_dtv (dl-tls.c:322)
+==21709==    by 0x40138A4: _dl_allocate_tls (dl-tls.c:539)
+==21709==    by 0x4E4226E: allocate_stack (allocatestack.c:588)
+==21709==    by 0x4E4226E: pthread_create@@GLIBC_2.2.5 (pthread_create.c:539)
+==21709==    by 0x40A819: pool_creation (pool.c:177)
+==21709==    by 0x406EFB: main (chatty.c:2293)
+==21709== 
+==21709== LEAK SUMMARY:
+==21709==    definitely lost: 4,016 bytes in 58 blocks
+==21709==    indirectly lost: 168 bytes in 7 blocks
+==21709==      possibly lost: 2,448 bytes in 9 blocks
+==21709==    still reachable: 48 bytes in 2 blocks
+==21709==         suppressed: 0 bytes in 0 blocks
+==21709== 
+==21709== For counts of detected and suppressed errors, rerun with: -v
+==21709== ERROR SUMMARY: 53 errors from 28 contexts (suppressed: 0 from 0)

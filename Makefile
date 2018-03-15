@@ -56,7 +56,13 @@ TARGETS		= $(BIN_DIR)/chatty        \
 
 
 # aggiungere qui i file oggetto da compilare
-OBJECTS		= 	*.o
+OBJECTS		=  	$(BIN_DIR)/connections.o	\
+				$(BIN_DIR)/config.o			\
+				$(BIN_DIR)/hashtable.o		\
+				$(BIN_DIR)/pool.o			\
+				$(BIN_DIR)/queue.o			\
+				$(BIN_DIR)/signup.o			
+				
 
 # aggiungere qui gli altri include
 HEADER_FILES   =	$(SOURCE_DIR)/ops.h	  		\
@@ -68,45 +74,37 @@ HEADER_FILES   =	$(SOURCE_DIR)/ops.h	  		\
 				  	$(SOURCE_DIR)/hashtable.h	\
 				  	$(SOURCE_DIR)/signup.h		\
 				  	$(SOURCE_DIR)/config.h		
-
-
-SOURCE_FILES	= 	$(SOURCE_DIR)/connections.c 	\
-					$(SOURCE_DIR)/queue.c 			\
-					$(SOURCE_DIR)/pool.c			\
-					$(SOURCE_DIR)/hashtable.c 		\
-					$(SOURCE_DIR)/signup.c			\
-				  	$(SOURCE_DIR)/config.c		
 					
 
 
 .PHONY: all clean cleanall test1 test2 test3 test4 test5 consegna
 .SUFFIXES: .c .h
 
-$(SOURCE_DIR)/%: $(SOURCE_DIR)/%.h $(SOURCE_DIR)/%.c 
+$(BIN_DIR)/%: $(SOURCE_DIR)/%.c $(HEADER_FILES)
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -o $@ $< $(LDFLAGS)
 
-$(SOURCE_DIR)/%.o: $(SOURCE_DIR)/%.h $(SOURCE_DIR)/%.c
+$(BIN_DIR)/%.o: $(SOURCE_DIR)/%.c $(HEADER_FILES)
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
 
-$(BIN_DIR)/chatty.o: $(SOURCE_DIR)/chatty.c
+$(BIN_DIR)/chatty.o: $(SOURCE_DIR)/chatty.c $(HEADER_FILES)
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
 
-$(BIN_DIR)/client.o: $(SOURCE_DIR)/client.c
+$(BIN_DIR)/client.o: $(SOURCE_DIR)/client.c $(HEADER_FILES)
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
 	
 
 all		: $(TARGETS)
 
 
-$(BIN_DIR)/chatty: $(BIN_DIR)/chatty.o $(LIB_DIR)/libchatty.a $(HEADER_FILES) $(SOURCE_FILES)
+$(BIN_DIR)/chatty: $(BIN_DIR)/chatty.o $(LIB_DIR)/libchatty.a $(HEADER_FILES)
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) -lm						#math.h needs -lm option
 
-$(BIN_DIR)/client: $(BIN_DIR)/client.o $(SOURCE_DIR)/message.h $(HEADER_FILES) $(SOURCE_FILES) #$(BIN_DIR)/connections.o
+$(BIN_DIR)/client: $(BIN_DIR)/client.o $(SOURCE_DIR)/message.h $(BIN_DIR)/connections.o
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 ############################ non modificare da qui in poi
 
-$(LIB_DIR)/libchatty.a: $(BIN_DIR)/$(OBJECTS)
+$(LIB_DIR)/libchatty.a: $(OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
 clean		:
