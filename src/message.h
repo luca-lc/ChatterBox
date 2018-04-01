@@ -71,18 +71,14 @@ typedef struct {
 
 
 /**
- *
- */
-typedef struct ch_msg
-{
-	char chat_title[MAX_NAME_LENGTH];
-	queue_t *messages;
-}chat_t;
-
-
-
-/**
- *
+ * \typedef             group_chat_t
+ * \struct              struct grp_msg
+ * \brief               Defines a new structure of type 'group_chat_t' to implement 
+ *                      group chats
+ * \var     char_title  Variable to name a chat
+ * \var     partecipats Pointer to a queue to save participants
+ * \var     messages    Pointer to the queue where save group messages
+ * \var     creator     Variable to save the group's creator
  */
 typedef struct grp_msg
 {

@@ -19,16 +19,16 @@ UnixPath         = /tmp/chatty_socket
 MaxConnections	 = 32
 
 # numero di thread nel pool 
-ThreadsInPool    = 10
+ThreadsInPool    = 8
 
 # dimensione massima di un messaggio testuale (numero di caratteri)
 MaxMsgSize       = 512
 
 # dimensione massima di un file accettato dal server (kilobytes)
-MaxFileSize      = 2048
+MaxFileSize      = 1024
 
 # numero massimo di messaggi che il server 'ricorda' per ogni client
-MaxHistMsgs      = 12    
+MaxHistMsgs      = 16
 
 # directory dove memorizzare i files da inviare agli utenti 
 DirName          = /tmp/chatty 
@@ -38,3 +38,6 @@ StatFileName     = /tmp/chatty_stats.txt
 # --------------------------------------------------------------
 
 # aggiungere altre opzioni necessarie da qui in poi
+
+
+ 

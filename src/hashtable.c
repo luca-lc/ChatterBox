@@ -1,44 +1,69 @@
-/* $hashtable.c$ */
+/** $hashtable_c$ **/
 
 /**
- * @file hashtable.c
- * @section LICENSE
+ * \file hashtable.c
+ * \section LICENSE
  * ****************************************************************************
- * Copyright (c)2017 Luca Canessa (516639)                                    *
+ * \author Luca Canessa (516639)                   			                  *
  *                                                                            *
+ * \copyright \n															  *
  * Declares that all contents of this file are author's original operas       *
  *                                                                            *
  ******************************************************************************
- * @section DESCRIPTION
+ * \section DESCRIPTION
  * Looking overview
  *
  * In this file there are functions to create and manipulate hash tables to
- * register users
+ * register users.
+ * This hash table is  designed as an array in which each cell represents an 
+ * element in which a user and a group or more are saved. So one or more users 
+ * or groups could be saved in an array cell. This is managed with a linked list. 
+ * If a user U or a group G is the first to be added to cell C, it is saved 
+ * directly to the cell, otherwise U or G is appended to the  overflow queue C.
+ * ALL FUNCTIONS (except hashValue() and initTable()) MUST BE USED WITH HASH 
+ * TABLE's LOCK ACQUIRED
  *
- * hashValue() :	Calculates the hash value using division
- * 					Requires value of key represented from the first letter of
- * 					nickname of type integer
- * 					Returns the hash value calculated using key and table's
+ * hashValue() :	Calculates the hash value using division method with table
  * 					length
+ * 					Requires value of key: first letter of nickname of type 
+ * 					integer
+ * 					Returns the hash value calculated
  *
- * initTable() :	Creates and initializes the hash table and set its
- * 					parameters: size as length of table and n_elem to 0
- * 					Requires the length of hash table with type UNISGNED
+ * initTable() :	Creates and initializes the hash table and its items.
+ * 					Requires the length of hash table of type UNISGNED
  * 					INTEGER
- * 					Return pointer to hash table
+ * 					Return pointer to hash table created.
  *
- * insert()    :	Inserts element user in hash table
- * 					Requires pointer to hash table where insert user and pointer
- * 					to string where is saved the name of user
- * 					Returns a bool type declared in 'chatty.h' file where
- * 					'true' is represented by 1 and 'false' by 0
+ * insert()    :	Inserts an user element in hash table.
+ * 					Requires pointer to hash table where insert user and 
+ * 					pointer to user nickname
+ * 					Returns 1 if it has been added, otherwise 0.
  *
- * search()		:	Search a nickname in hash table using
+ * search()		:	Search a user in hash table using its nickname
  * 					Requires pointer to hash table where search and pointer to
- * 					string that represents the nickname to search
- * 					Returns a bool type declared in 'chatty.h' file where
- * 					'true' is represented by 1 and 'false' by 0
+ * 					user nickname
+ * 					Returns pointer to user if found, else NULL.
+ * 
+ * removing()	:	Search an user in hash table and if found it, removes it.
+ * 					Requires pointer to the table and pointer to users nickname
+ * 					Returns 1 if it has been removed, otherwise 0
+ * 
+ * addGroup()	:	Allocates space to insert a group and initializes its items
+ * 					Requires pointer to the hash table and pointer to group name
+ * 					Returns 1 if the gruoup has been added, otherwise 0
+ * 
+ * searchGroup():	Search in the hash table a group using nickname.
+ * 					Requires pointer to the hash table and pointer to group's 
+ * 					nickname.
+ * 					Returns pointer to the group found, otherwise NULL.
+ * 
+ * removingGroup():	Search the group with nickname passed and if found removes
+ * 					it.
+ * 					Requires pointer to the hash table and pointer to the group
+ * 					nickname.
+ * 					Returns 1 if it removed, otherwise 0.
 */
+
 
 
 /******************************************************************************
@@ -59,13 +84,16 @@
 								   FUNCTIONS
 ******************************************************************************/
 
-int _MAX_HIST;
+int _MAX_HIST;		///< Variable used to save the size of users chat history
+
 
 
 /**
- * @brief		given the key calculates hash value with division method using the key and the max connection
- * @var	key		value of key => first letter of nickname
- * @return		hash value calculated with division method from key value and number of cells of hash table
+ * \fn				hashVal
+ * \brief			Given the key calculates hash value with division method using
+ * 					the table size
+ * \param	key		Value of key represented from the first character of name
+ * \return			The hash value calculated
  */
 int hashVal( int key )
 {
@@ -75,20 +103,23 @@ int hashVal( int key )
 
 
 /**
- * @brief		creates and initializes the hash table and set all parameters as the size of table and number of elements in the table
- * @var	length	number of cells to insert in hash table
- * return table	pointer to hash table created
+ * \fn				initTable
+ * \brief			Creates and initializes the hash table and set all 
+ * 					parameters. Allocates space for users and groups.
+ * 					Allocates space also to save the online users
+ * \param	length	Size of hash table. It's used for users and group
+ * \return	table	Pointer to hash table just created
  */
 hashtable_t *initTable( unsigned int length )
 {
 	hashtable_t *table;
-	//creation table
+
 	if( (table = ( hashtable_t * )malloc( sizeof( struct ht ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to create hash table" );
 		return NULL;
 	}
-	//creation cell
+
 	if( (table->users = ( ht_elem_t * )malloc( length * sizeof( struct elem ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to create elements in hash table" );
@@ -96,7 +127,7 @@ hashtable_t *initTable( unsigned int length )
 		return NULL;
 	}
 
-	if( (table->groups = ( ht_G_t * )malloc( length * sizeof( struct gr ) )) == NULL )
+	if( (table->groups = ( ht_G_t * )calloc( length, sizeof( struct gr ) )) == NULL )
 	{
 		fprintf( stderr, "Problem to create elements in hash table" );
 		free( table->users );
@@ -104,7 +135,6 @@ hashtable_t *initTable( unsigned int length )
 		return NULL;
 	}
 
-	//init cell
 	for( int i = 0; i < length; i++ )
 	{
 		table->users[i].user = NULL;
@@ -113,7 +143,6 @@ hashtable_t *initTable( unsigned int length )
 		table->groups[i].collision = NULL;
 	}
 
-	//init elem table
 	table->ht_lock = ( pthread_mutex_t )PTHREAD_MUTEX_INITIALIZER;
 	table->max_u = length;
 	table->reg_users = 0;
@@ -125,23 +154,28 @@ hashtable_t *initTable( unsigned int length )
 
 
 /**
- * @brief		inserts an element in hash table using hash value calculated in 'hashValue' function
- * 				!!! IMPORTANT: acquire mutex before using !!!
- * @var	table	pointer to hash table where insert the new element
- * @var	name	pointer to string that represents the nickname to insert
- * @return		true if terminate without errors
- * 				false otherwise
+ * \fn				insert
+ * \brief			Inserts an element in hash table using hash value 
+ * 					calculated in 'hashValue' function. Creates an users and 
+ * 					fills all its items. Initializes also its queue pointers:
+ * 					to chat hisoty and groups archive. If this user is the 
+ * 					first in that cell then puts it directly in the table, else
+ * 					inserts it in the overflow queue. 
+ * \warning			!!! IMPORTANT: acquire mutex before using this !!!
+ * \param	table	Pointer to hash table where insert the new element
+ * \param	name	Pointer to user name
+ * \return	0/1		If user has been inserted then 1, else 0		
  */
-bool insert( hashtable_t *table, char *name )
+int insert( hashtable_t *table, char *name )
 {
 
 	int val = hashVal( name[0] );
 
 	if( table->users[val].user == NULL )
 	{
-		if( (table->users[val].user = ( user_t * )malloc( sizeof( struct us ) )) == NULL )
+		if( (table->users[val].user = ( user_t * )calloc(1, sizeof( struct us ) )) == NULL )
 		{
-			return false;
+			return 0;
 		}
 
 		strcpy( table->users[val].user->nickname, name );
@@ -155,7 +189,7 @@ bool insert( hashtable_t *table, char *name )
 
 		table->reg_users += 1;
 
-		return true;
+		return 1;
 	}
 	else
 	{
@@ -165,9 +199,9 @@ bool insert( hashtable_t *table, char *name )
 		}
 
 		user_t *tmp;
-		if( (tmp = ( user_t * )malloc( sizeof( user_t ) )) == NULL )
+		if( (tmp = ( user_t * )calloc(1, sizeof( user_t ) )) == NULL )
 		{
-			return false;
+			return 0;
 		}
 
 		strcpy(tmp->nickname, name);
@@ -181,89 +215,30 @@ bool insert( hashtable_t *table, char *name )
 		if( push( table->users[val].collision, tmp ) == 0 )
 		{
 			table->reg_users += 1;
-			return true;
+			return 1;
 		}
 		else
 		{
 			destroy_queue( tmp->chats );
 			free( tmp );
-			return false;
+			return 0;
 		}
 	}
-	return false;
+	return 0;
 }
 
 
 
 /**
- * @brief		inserts an element in hash table using hash value calculated in 'hashValue' function
- * 				!!! IMPORTANT: acquire mutex before using !!!
- * @var	table	pointer to hash table where insert the new element
- * @var	name	pointer to string that represents the nickname to insert
- * @return		true if terminate without errors
- * 				false otherwise
- */
-bool addGroup( hashtable_t *table, char *name )
-{
-
-	int val = hashVal( name[0] );
-
-	if( table->groups[val].group == NULL )
-	{
-		if( (table->groups[val].group = (group_chat_t *)malloc( sizeof( struct grp_msg ) )) == NULL )
-		{
-			return false;
-		}
-
-		strcpy( table->groups[val].group->chat_title, name );
-
-		table->groups[val].group->participants = initialQueue();
-		table->groups[val].group->messages = initialQueue();
-
-		return true;
-	}
-	else
-	{
-		if( table->groups[val].collision == NULL )
-		{
-			table->groups[val].collision = initialQueue();
-		}
-
-		group_chat_t *tmp;
-		if( (tmp = (group_chat_t *)malloc( sizeof( struct grp_msg ) )) == NULL )
-		{
-			return false;
-		}
-
-		strcpy(tmp->chat_title, name);
-
-		tmp->messages = initialQueue();
-		tmp->participants = initialQueue();
-
-
-		if( push( table->groups[val].collision, tmp ) == 0 )
-		{
-			return true;
-		}
-		else
-		{
-			destroy_queue( tmp->messages );
-
-			free( tmp );
-			return false;
-		}
-	}
-	return false;
-}
-
-
-/**
- * @brief		searches an element that represented from user in the hash table
- * 				!!! IMPORTANT: acquire mutex before using !!!
- * @var	table	pointer to hash table where search user
- * @var name	pointer to string where is written the name of user to search
- * @return		true if user is present
- * 				false otherwise
+ * \fn				search
+ * \brief			Search an user using its name passed as argument in hash table:
+ * 					if found it then return its pointer. To search, it starts from
+ * 					the cell with hash value calculated and then goes into the
+ * 					overflow queue.
+ * \warning			!!! IMPORTANT: acquire mutex before using !!!
+ * \param	table	Pointer to hash table where searching user
+ * \param 	name	Pointer to user name to search
+ * \return			Pointer to user found if exists, otherwise NULL
  */
 user_t *search( hashtable_t *table, char *name )
 {
@@ -312,57 +287,21 @@ user_t *search( hashtable_t *table, char *name )
 
 
 /**
- * @brief		searches an element that represented from user in the hash table
- * 				!!! IMPORTANT: acquire mutex before using !!!
- * @var	table	pointer to hash table where search user
- * @var name	pointer to string where is written the name of user to search
- * @return		true if user is present
- * 				false otherwise
+ * \fn				removing
+ * \brief			Search an user in hash table and if it found, it's removed.
+ * 					The operations to search user is the same of the function
+ * 					'search()'. Instead, to remove the user, the function check 
+ * 					if the user that must be removed is located directly in the 
+ * 					table then check if exists an user into overflow queue, if 
+ * 					it exists then swap the users, else  remove the user. If 
+ * 					the user to be removed is in the overflow queue then 
+ * 					removes the node of queue.
+ * \warning			!!! IMPORTANT: acquire mutex before using !!!
+ * \param	table	Pointer to hash table
+ * \param	name	Pointer to user name
+ * \Return	1/0		1 if the user has been removed, else 0
  */
-group_chat_t *searchGroup( hashtable_t *table, char *name )
-{
-	int val = hashVal( name[0] );
-
-	if( table->groups[val].group != NULL )
-	{
-		if( strcmp(table->groups[val].group->chat_title, name) == 0 )
-		{
-			return table->groups[val].group;
-		}
-		else
-		{
-			if( table->groups[val].collision != NULL )
-			{
-				group_chat_t *tmp = NULL;
-				node_t *nt = table->groups[val].collision->head;
-				while( nt != NULL )
-				{
-					tmp = nt->ptr;
-					if( strcmp( tmp->chat_title, name ) == 0 )
-					{
-						break;
-					}
-					else
-					{
-						nt = nt->next;
-					}
-				}
-				if( nt != NULL )
-					{
-						return tmp;
-					}
-			}
-		}
-	}
-	return NULL;
-}
-
-
-
-/**
- *
- */
-bool removing( hashtable_t *table, char *name )
+int removing( hashtable_t *table, char *name )
 {
 	int val = hashVal( name[0] );
 
@@ -418,7 +357,7 @@ bool removing( hashtable_t *table, char *name )
 
 		table->reg_users -= 1;
 
-		return true;
+		return 1;
 	}
 	else
 	{
@@ -451,25 +390,156 @@ bool removing( hashtable_t *table, char *name )
 
 			if( n == NULL )
 				{
-					return false;
+					return 0;
 				}
 			else
 				{
 					table->reg_users -= 1;
-					return true;
+					return 1;
 				}
 		}
 	}
 
-	return false;
+	return 0;
 }
 
 
 
 /**
- *
+ * \fn				addGroup
+ * \brief			Inserts an element in hash table using hash value 
+ * 					calculated in 'hashValue' function. Creates a group and 
+ * 					fills all its items. Initializes also its queue pointers:
+ * 					to chat hisoty and partecipants queue. If this group is the 
+ * 					first in that cell then puts it directly in the table, else
+ * 					inserts it in the overflow queue. 
+ * \warning			!!! IMPORTANT: acquire mutex before using this !!!
+ * \param	table	Pointer to hash table where insert the new element
+ * \param	name	Pointer to group name
+ * \return	0/1		If user has been inserted then 1, else 0		
  */
-bool removingGroup( hashtable_t *table, char *name )
+int addGroup( hashtable_t *table, char *name )
+{
+
+	int val = hashVal( name[0] );
+
+	if( table->groups[val].group == NULL )
+	{
+		if( (table->groups[val].group = (group_chat_t *)malloc( sizeof( struct grp_msg ) )) == NULL )
+		{
+			return 0;
+		}
+
+		strcpy( table->groups[val].group->chat_title, name );
+
+		table->groups[val].group->participants = initialQueue();
+		table->groups[val].group->messages = initialQueue();
+
+		return 1;
+	}
+	else
+	{
+		if( table->groups[val].collision == NULL )
+		{
+			table->groups[val].collision = initialQueue();
+		}
+
+		group_chat_t *tmp;
+		if( (tmp = (group_chat_t *)malloc( sizeof( struct grp_msg ) )) == NULL )
+		{
+			return 0;
+		}
+
+		strcpy(tmp->chat_title, name);
+
+		tmp->messages = initialQueue();
+		tmp->participants = initialQueue();
+
+
+		if( push( table->groups[val].collision, tmp ) == 0 )
+		{
+			return 1;
+		}
+		else
+		{
+			destroy_queue( tmp->messages );
+
+			free( tmp );
+			return 0;
+		}
+	}
+	return 0;
+}
+
+
+
+/**
+ * \fn				searchGroup
+ * \brief			Search a group using its name passed as argument in hash table:
+ * 					if found it then return its pointer. To search, it starts from
+ * 					the cell with hash value calculated and then goes into the
+ * 					overflow queue.
+ * \warning			!!! IMPORTANT: acquire mutex before using !!!
+ * \param	table	Pointer to hash table where searching user
+ * \param 	name	Pointer to group name to search
+ * \return			Pointer to group found if exists, otherwise NULL
+ */
+group_chat_t *searchGroup( hashtable_t *table, char *name )
+{
+	int val = hashVal( name[0] );
+
+	if( table->groups[val].group != NULL )
+	{
+		if( strcmp(table->groups[val].group->chat_title, name) == 0 )
+		{
+			return table->groups[val].group;
+		}
+		else
+		{
+			if( table->groups[val].collision != NULL )
+			{
+				group_chat_t *tmp = NULL;
+				node_t *nt = table->groups[val].collision->head;
+				while( nt != NULL )
+				{
+					tmp = nt->ptr;
+					if( strcmp( tmp->chat_title, name ) == 0 )
+					{
+						break;
+					}
+					else
+					{
+						nt = nt->next;
+					}
+				}
+				if( nt != NULL )
+					{
+						return tmp;
+					}
+			}
+		}
+	}
+	return NULL;
+}
+
+
+
+/**
+ * \fn				removingGroup
+ * \brief			Search a group in hash table and if it found, it's removed.
+ * 					The operations to search a group is the same of the 
+ * 					function 'search()'. Instead, to remove the group, the 
+ * 					function check if the group that must be removed is located 
+ * 					directly in the table then check if exists a group into 
+ * 					overflow queue, if it exists then swap the group, else 
+ * 					remove the user. If the user to be removed is in the 
+ * 					overflow queue then removes the node of queue.
+ * \warning			!!! IMPORTANT: acquire mutex before using !!!
+ * \param	table	Pointer to hash table
+ * \param	name	Pointer to group name
+ * \Return	1/0		1 if the group has been removed, else 0
+ */
+int removingGroup( hashtable_t *table, char *name )
 {
 	int val = hashVal( name[0] );
 
@@ -500,7 +570,7 @@ bool removingGroup( hashtable_t *table, char *name )
 			table->groups[val].group = subst;
 		}
 			
-		return true;
+		return 1;
 	}
 	else
 	{
@@ -533,14 +603,14 @@ bool removingGroup( hashtable_t *table, char *name )
 
 			if( n == NULL )
 				{
-					return false;
+					return 0;
 				}
 			else
 				{
-					return true;
+					return 1;
 				}
 		}
 	}
 
-	return false;
+	return 0;
 }

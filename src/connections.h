@@ -1,4 +1,4 @@
-	/*
+/*
  * chatterbox Progetto del corso di LSO 2017
  *
  * Dipartimento di Informatica Università di Pisa
@@ -78,8 +78,13 @@ int readData(long fd, message_data_t *data);
  */
 int readMsg(long fd, message_t *msg);
 
+
 /**
- *
+ * \brief			Function to send only message header
+ * \param	connfd	Socket's file descriptor
+ * \param	hdr		Pointer to the header to send
+ * \return			An integer greater than 0 if sent header, else 0 if not 
+ * 					sent or -1 if it exits with errors
  */
 int sendHeader(long connfd, message_hdr_t *hdr);
 

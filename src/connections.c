@@ -1,13 +1,76 @@
-/* $connections.c$ */
+/** $connections_c$ **/
+
 /**
- * @section LICENSE
+ * \section LICENSE
  * ****************************************************************************
- * Copyright (c)2017 Luca Canessa (516639)                                    *
+ * \author Luca Canessa (516639)                                    		  *
  *                                                                            *
+ * \copyright \n															  *
  * Declares that all contents of this file are author's original operas       *
  *                                                                            *
  ******************************************************************************
-*/
+ *
+ * \section DESCRIPTION
+ * Looking overview
+ * 
+ * In this file are present functions to manage connections from and to 
+ * clients. Every communication between server and clients is handled using 
+ * messages. Each request from clients is presents in the message header and 
+ * into the message body, there are the arguments to manage the request. Each 
+ * received datum is in char representation so each function that manages this,
+ * it must cast in datum type. Instead, if the datum shall be sent, the 
+ * function that manges it, must save the datum in char into a buffer.
+ * 
+ * openConnection()	:	Its task is to open a file descriptor for a socket.
+ * 						Requires a pointer to the path where save the socket 
+ * 						that will be open, the number of time to retry to 
+ * 						connect if there are some problems and the seconds that
+ * 						must pass between the retrying.
+ * 						Returns the idetifier of file destriptor.
+ * 
+ * readHeader()		:	Receives a buffer where are present the message header 
+ * 						items.
+ * 						Requires the identifier of file descriptor and pointer
+ * 						to a message header where save the data received.
+ * 						Returns the number of bytes read or -1 if exits with 
+ * 						some errors.
+ * 
+ * sendHeader()		:	Sends a buffer where are present the message header 
+ * 						items. 
+ * 						Requires the identifier of file descriptor and the 
+ * 						pointer to a message header where saved the data to be 
+ * 						sent. 
+ * 						Returns the number of bytes sent or -1 if exits with 
+ * 						some errors.
+ * 
+ * sendRequest()	:	Sends a buffer where are present the message items. 
+ * 						Requires the identifier of file descriptor and the 
+ * 						pointer to a message where saved the data that will be 
+ * 						managed by server.
+ * 						Returns the number of bytes sent or -1 if exits with 
+ * 						some errors.
+ * 
+ * readData()		:	Receives a buffer where are present the message body 
+ * 						items.
+ * 						Requires the identifier of file descriptor and pointer
+ * 						to a message body where save the data received.
+ * 						Returns the number of bytes read or -1 if exits with 
+ * 						some errors.
+ * 
+ * sendData()		:	Sends a buffer where are present the message body items 
+ * 						Requires the identifier of file descriptor and the 
+ * 						pointer to a message body where saved the data to be 
+ * 						sent. 
+ * 						Returns the number of bytes sent or -1 if exits with 
+ * 						some errors.
+ * 
+ * readMsg()		:	Receives a buffer where are present the message items. 
+ * 						Requires the identifier of file descriptor and the 
+ * 						pointer to a message where save the data that will be 
+ * 						managed by server.
+ * 						Returns the number of bytes read or -1 if exits with 
+ * 						some errors.
+ */
 
 
 
@@ -25,18 +88,26 @@
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
+
 #include <src/connections.h>
 #include <src/ops.h>
 
-int _FILESIZE, _MSGSIZE;
-char SOCKNAME[UNIX_PATH_MAX];
-char Dir[256];
+int _FILESIZE, _MSGSIZE;    ///< _FILESIZE is the max size of a file could be sent - _MSGSIZE is the max size of a message could be sent
+char SOCKNAME[UNIX_PATH_MAX]; ///< path where is saved the socket
+char Dir[256];			///< path where save the files received
+
+
 
 /******************************************************************************
 									FUNTIONS
 ******************************************************************************/
 /**
- *
+ * \fn				openConnection
+ * \brief 			opens a connection from client to server
+ * \param	path	path where located the socket
+ * \param	ntimes	number of reconnection attempts
+ * \param 	secs	seconds that elapse between attempts
+ * \return	sockfd	identifier of file descriptor
  */
 int openConnection( char* path, unsigned int ntimes, unsigned int secs )
 {
@@ -71,12 +142,20 @@ int openConnection( char* path, unsigned int ntimes, unsigned int secs )
 
 
 /**
- * @brief
+ * \fn				readHeader
+ * \brief			Receives a buffer where are all header items to know a 
+ * 					request or to know the server response.
+ * 					Save the items in a buffer and then copy them one at a time
+ * 					in the passed header.
+ * \param	connfd	Identifier of file  descriptor
+ * \param	hdr		Pointer to the header of the message in which the received 
+ * 					items will be saved
+ * \return  size_buf Number of byte read or -1 if exits with error
  */
 int readHeader(long connfd, message_hdr_t *hdr)
 {
 	size_t size_buf = sizeof(hdr->op) + sizeof(hdr->sender);
-	char *buff;
+	char *buff = NULL;
 
 	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
 	{
@@ -84,7 +163,6 @@ int readHeader(long connfd, message_hdr_t *hdr)
 		fprintf( stderr, "Problem to allocating space for buffer" );
 		return EXIT_FAILURE;
 	}
-
 
 	int left = size_buf, r = 0, s = 0;
 
@@ -107,7 +185,6 @@ int readHeader(long connfd, message_hdr_t *hdr)
 		left -= r;
 	}
 
-
 	//divide the buffer contents
 	int offset = 0;
 	memcpy( &hdr->op, buff + offset, sizeof( hdr->op ) ); //copy op in hdr's field
@@ -115,19 +192,29 @@ int readHeader(long connfd, message_hdr_t *hdr)
 	offset += sizeof( hdr->op );
 	memcpy( hdr->sender, buff + offset, sizeof( hdr->sender ) ); //copy sender in hdr's field
 
+	if( buff )
+		{
+			free( buff );
+		}
 
-	free( buff );
 	return( size_buf );
 }
 
 
+
 /**
- * @brief
+ * \fn				sendHeader
+ * \brief			Sends a buffer where are all header items to respond to the client.
+ * 					Copy the items one at a time from the passed header to a buffer and sends it.
+ * \param	connfd	Identifier of file  descriptor
+ * \param	hdr		Pointer to the header of the message in which the received 
+ * 					items will be saved
+ * \return  size_buf Number of byte sent or -1 if exits with error
  */
 int sendHeader(long connfd, message_hdr_t *hdr)
 {
 	size_t size_buf = sizeof(hdr->op) + sizeof(hdr->sender);
-	char *buff;
+	char *buff = NULL;
 
 	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
 	{
@@ -143,12 +230,9 @@ int sendHeader(long connfd, message_hdr_t *hdr)
 	offset += sizeof( hdr->op );
 	memcpy( buff + offset, hdr->sender, sizeof( hdr->sender ) ); //copy sender in hdr's field
 
-
-
-
 	int left = size_buf, r = 0, s = 0;
 
-	//receive the buffer
+	//send the buffer
 	while( left > 0 )
 	{
 		if( (r = send( (int)connfd, buff+s, left, 0)) == -1 )
@@ -166,23 +250,36 @@ int sendHeader(long connfd, message_hdr_t *hdr)
 		s += r;
 		left -= r;
 	}
+	
+	if( buff )
+		{
+			free( buff );
+		}
 
-
-
-	free( buff );
 	return( size_buf );
 }
 
 
 
 /**
- * @brief
+ * \fn				sendRequest
+ * \brief			Send a request to the server. This request is a message 
+ * 					with: code to define the request in the header and, if 
+ * 					necessary, the other parts of the message to handle the 
+ * 					request. Copies all items in a buffer and send it.
+ * 					The copy and send are divided in three blocks:
+ * 					first, copies all items and send the header of the message
+ * 					second, sends the header of body of the message
+ * 					third, send directly the data of the body of the message.
+ * \param	connfd	Identifier of file  descriptor
+ * \param	msg		Pointer to the message where located the request
+ * \return  size_buf Number of byte sent or -1 if exits with error
  */
 int sendRequest(long fd, message_t *msg)
 {
 	size_t size_buf = sizeof(msg->hdr.op) + sizeof( msg->hdr.sender) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver) + msg->data.hdr.len;
 	int left, r, s;
-	char *buff;
+	char *buff = NULL;;
 
 
 	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
@@ -207,8 +304,6 @@ int sendRequest(long fd, message_t *msg)
 
 	offset += sizeof(msg->data.hdr.receiver);
 	memcpy( buff+offset, msg->data.buf, msg->data.hdr.len ); //copy body msg in buffer
-
-
 
 	//send header
 	left =  sizeof(msg->hdr.op) + sizeof( msg->hdr.sender ), r = 0, s = 0;
@@ -270,15 +365,28 @@ int sendRequest(long fd, message_t *msg)
 		left -= r;
 	}
 
-
-	free( buff );
+	if( buff )
+		{
+			free( buff );
+		}
+		
 	return( size_buf );
 }
 
 
 
 /**
- * @brief
+ * \fn				readData
+ * \brief			Receives a buffer where are all body items to manage a 
+ * 					request or to receive data from server
+ * 					Saves the items in a buffer and then copy them one at a time
+ * 					in the passed header. The receive is dived in two:
+ * 					first, receives the message body header
+ * 					second, receives the data of the message
+ * \param	connfd	Identifier of file  descriptor
+ * \param	data	Pointer to the body of the message in which the received 
+ * 					items will be saved
+ * \return  size_buf Number of byte read or -1 if exits with error
  */
 int readData(long fd, message_data_t *data)
 {
@@ -317,9 +425,7 @@ int readData(long fd, message_data_t *data)
 	int offset = 0;
 	memcpy( &data->hdr.len, buff + offset, sizeof( data->hdr.len ) );
 	offset += sizeof( int );
-   memcpy( data->hdr.receiver, buff + offset, sizeof( data->hdr.receiver ) );
-
-
+    memcpy( data->hdr.receiver, buff + offset, sizeof( data->hdr.receiver ) );
 
 	data->buf = (char *)malloc( data->hdr.len * sizeof(char) );
 	left = data->hdr.len, r = 0, s = 0;
@@ -343,15 +449,26 @@ int readData(long fd, message_data_t *data)
 		left -= r;
 	}
 
-	free( buff );
+	if( buff )
+		{
+			free( buff );
+		}
 	return( size_buf + data->hdr.len );
 }
 
 
 
-
 /**
- * @brief
+ * \fn				sendData
+ * \brief			Sends a buffer where are all body items to manage a request
+ *  				or to send data from server. Saves the items in a buffer 
+ * 					coping them one at a time in the passed message body. The 
+ * 					receive is dived in two:
+ * 					first, receives the message body header
+ * 					second, receives the data of the message
+ * \param	connfd	Identifier of file  descriptor
+ * \param	msg		Pointer to the body of the message in which saved the items
+ * \return  size_buf Number of byte sent or -1 if exits with error
  */
 int sendData( long fd, message_data_t *msg )
 {
@@ -390,9 +507,6 @@ int sendData( long fd, message_data_t *msg )
 		left -= r;
 	}
 
-
-
-
 	//send body
 	left = msg->hdr.len, r = 0, s = 0;
 	while( left > 0 )
@@ -413,7 +527,10 @@ int sendData( long fd, message_data_t *msg )
 		left -= r;
 	}
 
-	free( buff );
+	if( buff )
+		{
+			free( buff );
+		}
 	return( size_buf + msg->hdr.len );
 }
 
@@ -421,14 +538,28 @@ int sendData( long fd, message_data_t *msg )
 
 
 /**
- * @brief
+ * \fn				readMsg
+ * \brief			Receives a request to the server. This request is a message 
+ * 					with: code to define the request in the header and the 
+ * 					other parts of the message to handle the request. Receives 
+ * 					all items in a buffer and copies the items into the 
+ * 					appropriate camp of the message passed. The receive and 
+ * 					copy are divided in three blocks:
+ * 					first, receives header items and copies them into the 
+ * 					header of the message
+ * 					second, receives and then copies the message body header
+ * 					into the message passed
+ * 					third, receives directly the data of the body
+ * \param	connfd	Identifier of file  descriptor
+ * \param	msg		Pointer to the message where located the request
+ * \return  size_buf Number of byte received or -1 if exits with error
  */
 int readMsg(long fd, message_t *msg)
 {
 	int left = 0, r = 0, s= 0;
 	size_t size_buf = sizeof(msg->hdr.op) + sizeof(msg->hdr.sender) + sizeof(msg->data.hdr.len) + sizeof(msg->data.hdr.receiver);
 	char *buff = NULL;
-	if( (buff = ( char * )malloc( size_buf * sizeof( char ) )) == NULL )
+	if( (buff = ( char * )calloc( size_buf, sizeof( char ) )) == NULL )
 	{
 		perror( "malloc()" );
 		fprintf( stderr, "Problem to allocating space for buffer" );
@@ -492,7 +623,7 @@ int readMsg(long fd, message_t *msg)
 
 
 	//space allocation for the message body
-	if( (msg->data.buf = ( char * )malloc( msg->data.hdr.len * sizeof( char ) )) == NULL )
+	if( (msg->data.buf = ( char * )calloc( msg->data.hdr.len, sizeof( char ) )) == NULL )
 	{
 		perror( "malloc()" );
 		fprintf( stderr, "Problem to allocating space for message body" );
@@ -518,7 +649,17 @@ int readMsg(long fd, message_t *msg)
 		left -= r;
 	}
 
-	free( buff );
+	if( msg->data.hdr.len == 0 )
+		{
+			if( msg->data.buf )
+				free( msg->data.buf );
+			msg->data.buf = NULL;
+		}
+
+	if( buff )
+		{
+			free( buff );
+		}
 
 	return ( size_buf + msg->data.hdr.len );
 }
