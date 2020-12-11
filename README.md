@@ -12,7 +12,7 @@ Creare una directory temporanea, copiare kit_chatty.tar
 nella directory e spostarsi nella directory appena creata. 
 
 Es.  
-```
+```sh
 $$ mkdir Progetto
 $$ tar xvf kit_chatty.tar -C Progetto  
 ```
@@ -59,7 +59,7 @@ README.doxygen		: informazioni sul formato doxygen dei commenti alle funzioni
   
 3) Testare il software sviluppato con i test forniti dai docenti. Si consiglia di effettuare 
    questa fase solo dopo aver eseguito un buon numero di test preliminari.
-  ```
+ ```sh
  bash:~$ make test1  
  bash:~$ make test2  
  bash:~$ make test3
@@ -70,22 +70,22 @@ README.doxygen		: informazioni sul formato doxygen dei commenti alle funzioni
 4) preparare la documentazione: ovvero commentare adeguatamente il/i file che  
    contengono la soluzione  ed inserire un'intestazione contenente il nome  
    dello sviluppatore ed una dichiarazione di originalita'   
-  
+  ```c
    /** \file pippo.c  
        \author Giuseppe Garibaldi 456789 
        Si dichiara che il contenuto di questo file e' in ogni sua parte opera  
        originale dell'autore  
      */  
-  
+  ```
   
 5) Inserire nel Makefile il nome dei file da consegnare 
    (variabile FILE_DA_CONSEGNARE) il nome del tarball da produrre
    (variabile TARNAME) ed il corso di appartenenza (variabile CORSO)
   
 8) eseguire il test 
-  
+  ```sh
       bash:~$ make consegna  
-  
+  ```
    e seguire le istruzioni del sito del progetto per la consegna.
      
 
